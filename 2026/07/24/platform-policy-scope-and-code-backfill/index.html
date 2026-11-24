@@ -1,0 +1,61 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="统一运营平台与租户查询的制度范围，并梳理历史稽核编码回填的边界。">
+  <title>兼容运营平台制度范围，梳理历史编码回填 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/24/platform-policy-scope-and-code-backfill/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>兼容运营平台制度范围，梳理历史编码回填</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-24">2026-07-24</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>上一轮联调给稽核单元查询补上了制度范围。这天我处理了运营平台的特殊情形。当机构和租户都使用约定的运营平台标记时，查询使用平台约定的 <code>policyId</code>，让平台数据也能走同一条查询链路。</p>
+<p>我同时尝试用启动任务补齐历史稽核标准的三个唯一码字段。需要先从标准关联的稽核单元判断事项类型，再沿经济事项或费用行为关系取得所需编码。费用行为编码在只关联经济事项时可以为空。原笔记记录到回填尝试阶段。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>运营平台的约定值应该集中转换，否则不同入口很容易各解释一遍。回填还要区分「按业务定义可以为空」和「查不到有效关联」。前者是合法状态，后者需要单独记录和复核。如果把回填做成可重跑任务，也应保留已核验的编码，并能报告哪些记录仍无法解析。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

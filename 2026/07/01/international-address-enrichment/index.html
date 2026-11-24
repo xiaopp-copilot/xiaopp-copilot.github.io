@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从海外城市误匹配到国内地址的案例，梳理地理编码和大模型的职责。">
+  <title>让报销附件地点补全识别海外城市 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/01/international-address-enrichment/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>让报销附件地点补全识别海外城市</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-01">2026-07-01</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>这次我梳理了酒店水单、会议邀请、会议通知三类附件的地点补全。它们都会把识别出的地址交给地理编码服务，转换成区域信息。测试时发现，传入海外地名后，腾讯位置服务有时会返回一个可解析的国内地址。服务调用正常结束，结果却指错了地点。</p>
+<h2 id="排查结果和处理方向"><a href="#排查结果和处理方向" class="headerlink" title="排查结果和处理方向"></a>排查结果和处理方向</h2><p>我把问题落在两个判断上。请求前要识别输入是否可能来自海外，并保留能帮助消歧的国家信息。响应后还要检查返回的国家或地区是否与输入一致。国家、城市和区域编码需要前后一致，单看有没有返回编码，无法判断补全是否正确。</p>
+<p>海外地址接口需要额外申请，我尝试用已有的 Moonshot 调用策略从文本中提取国家和城市。笔记里记录的后续方向是取得海外接口能力后按境内外分流，再用大模型处理非结构化文本或提供候选。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>地址补全可以分成两步。模型擅长从原文理解地名，地理编码服务负责核验候选并给出标准区域。复盘时我也注意到，多轮地名试探会叠加同步调用耗时。明确国家的地址可以直接走对应分支，国家缺失或同名的情况则需要单独评估降级方式。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

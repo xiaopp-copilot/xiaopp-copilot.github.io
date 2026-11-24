@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="处理扩展字段换父节点时的路径变化，并厘清稽核单元的关联标识。">
+  <title>用 JSON 路径识别嵌套字段的迁移与删除 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/04/nested-field-path-changes/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>用 JSON 路径识别嵌套字段的迁移与删除</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-04">2026-06-04</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>更新扩展字段树后，有些还被制度引用的管控要素失去了显示名称。最初的字段差集思路在基本信息和报销单的扩展字段树上遇到了一个边界。子字段换了父节点，旧 JSON 路径也会消失，直接按旧路径判定删除会产生误差。</p>
+<h2 id="两处需要区分的标识"><a href="#两处需要区分的标识" class="headerlink" title="两处需要区分的标识"></a>两处需要区分的标识</h2><p>我梳理了 Java 服务里的路径比较。一级路径在新模型中找不到时，可列为删除候选。对于更深的路径，还要检查它是否随父节点迁移，或是否已经以新完整路径保留。两个检查都没有命中，才进入删除与引用判断。</p>
+<p>费用行为的校验还遇到一个关系查询问题。稽核单元里的事项 ID 在该场景下指向「经济事项与费用行为的关系记录」。只去费用行为表按主键查询会查不到，因为参与稽核的是两者的关联。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>路径表达字段在树中的位置，关系记录表达一项业务组合。两者都适合用于定位，但在判断对象是否消失前，得先核对它们各自的含义。设计测试时，我会分开覆盖字段换父节点、实际删除，以及同一费用行为关联多个事项的情况。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

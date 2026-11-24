@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="衔接稽核编码、关系查询和标准同步，并验证同步时目标事项的唯一码。">
+  <title>用业务唯一码改造稽核标准的查询与同步 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/10/audit-standard-sync-with-business-codes/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>用业务唯一码改造稽核标准的查询与同步</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-10">2026-07-10</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>在稽核点编码改造之后，我继续把经济事项、费用行为和稽核点唯一码接入查询与写入流程。任务还包括支持经济事项下拉框的关键字搜索，以及按问题编码反查关联事项。</p>
+<h2 id="查询与写入的改动"><a href="#查询与写入的改动" class="headerlink" title="查询与写入的改动"></a>查询与写入的改动</h2><p>查询关联事项时，先根据稽核点类型判断关联路径。经济事项稽核点可以直接找到事项，费用行为稽核点则需要经关系记录回到事项。开发关键字接口时，我也顺着 Spring MVC 的 <code>HandlerMethodArgumentResolver</code> 和 <code>ThreadLocal</code> 理清了登录上下文的注入过程。联调中，空关键字触发了 <code>Collectors.toMap</code> 构建时的空值异常，我在组装前补上了过滤。</p>
+<p>写入侧调整了新增、修改、复制和标准同步。关联制度由后端查询，遇到多条关系时选取能够解析出有效制度的记录。跨事项同步要按目标关系重新计算经济事项唯一码。对经济事项稽核点，从事项 ID 取得编码。对费用行为稽核点，先通过关系 ID 找到目标事项，再取得对应编码。记录中的同步用例验证了复制后的数据与预期一致。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>标准内容可以复制，承载标准的关联身份要在目标侧重建。测试时我会选两个编码不同的事项做同步，再核对落库后的唯一码。只检查接口返回成功，很容易漏掉目标记录仍带着源事项编码的情况。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

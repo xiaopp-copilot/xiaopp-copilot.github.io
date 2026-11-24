@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用稳定编码识别稽核点，同时给对账详情增加可配置的可读字段。">
+  <title>稽核点的稳定编码与可读结果 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/26/stable-audit-codes-and-readable-results/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>稽核点的稳定编码与可读结果</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-26">2026-06-26</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>这天的两项任务都在处理稽核信息的表达。一项是给系统可稳定识别的稽核点增加编码，另一项是让业务人员看懂按明细行配对后生成的稽核结果。</p>
+<h2 id="用编码识别稽核点"><a href="#用编码识别稽核点" class="headerlink" title="用编码识别稽核点"></a>用编码识别稽核点</h2><p>旧逻辑通过中文描述推断稽核点应执行的方法，文案变化会增加映射维护成本。我为稽核点、稽核单元和制度标准准备了增加标识码字段的脚本，并在标准记录上补充经济事项与费用行为唯一码字段。迁移脚本分别适配 Oracle 和 TDSQL，已有的稽核点和稽核单元按历史描述回填标识码，Java 实体和 DTO 同步扩展。</p>
+<h2 id="把配对键和显示字段分开"><a href="#把配对键和显示字段分开" class="headerlink" title="把配对键和显示字段分开"></a>把配对键和显示字段分开</h2><p>收入报表可以按人员编码配对，结果只显示编码时，业务人员仍要额外查找这行属于谁。我给对象匹配配置增加了一组可选展示字段。引擎完成明细配对后，从两侧结果中按配置提取名称等信息，随结果 DTO 一起返回，前端即可显示「收费员名称 · 小计金额」之类的可读文案。旧构造入口和缺省值保留，未配置展示字段时沿用原有结果。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>数据库标识、配对键和展示文案各有变化节奏。姓名可能重复，中文规则名称也可能调整。稳定的编码负责识别和匹配，展示字段负责解释结果。回归时应同时核对「配对结果是否一致」和「新配置能否补全解释」，避免展示改动改变规则本身。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

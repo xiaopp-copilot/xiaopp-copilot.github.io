@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="追踪覆盖导入时关系 ID 的变化，并记录旧稽核配置与新关联的兼容方案。">
+  <title>排查覆盖导入后找不到费用稽核配置的问题 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/18/importing-models-with-audit-relations/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>排查覆盖导入后找不到费用稽核配置的问题</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-18">2026-06-18</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>导入费用模型后，部分费用行为原有关联的稽核标准看起来被清空了。我从导入参数一路查到稽核单元和关系记录，发现问题集中在关联 ID 的变化。新建的配置可能暂时使用费用行为 ID，已经挂到经济事项下的旧配置则引用关系记录 ID。导入生成新关系后，稽核单元如果仍保留旧 ID，查询就找不回原标准。</p>
+<h2 id="排查与方案"><a href="#排查与方案" class="headerlink" title="排查与方案"></a>排查与方案</h2><p>我梳理了两种处理思路。已有关系被替换时，可以建立旧关联与新关联的映射，让稽核单元指向新的关系。业务上新增关联且需要继承配置时，则需要评估复制旧配置的做法，避免直接移动记录影响原关联。排查中也确认，关系更新会触发升级逻辑，导入的影响会传递到费用稽核。</p>
+<p>这次笔记记录的最终方案，是在覆盖导入时连同关联费用行为和关联凭证一起覆盖，保证导入按同一套关联语义处理。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>导入成功只能说明数据写进去了。更有价值的验证是拿同一个业务事项比对导入前后的查询结果，检查原有标准是否仍能通过新关联找到。尤其要分别验证替换关系和新增关系，因为前者要迁移引用，后者还要确认旧关联能继续使用原配置。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

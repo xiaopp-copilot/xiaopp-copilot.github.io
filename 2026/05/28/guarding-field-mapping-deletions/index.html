@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在全量替换的更新模型里识别被删除的字段，并检查下游制度引用。">
+  <title>给字段映射删除加上制度引用校验 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/05/28/guarding-field-mapping-deletions/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>给字段映射删除加上制度引用校验</h1>
+    <div class="entry-meta">
+      <time datetime="2026-05-28">2026-05-28</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>经济事项模型描述凭证可以使用哪些字段，制度模型则引用其中的管控要素来配置稽核标准。字段映射一旦被删除，制度里的字段编码就可能失去对应定义。这个任务要求在保存时识别这类删除，并让用户知道要先解除哪项引用。</p>
+<h2 id="我拆出的校验流程"><a href="#我拆出的校验流程" class="headerlink" title="我拆出的校验流程"></a>我拆出的校验流程</h2><p>Java 服务收到的是一份新的字段快照，持久化采用先删旧记录、再写新记录的方式。我把校验设计在写入前，先比较新旧模型，得到业务上真正移除的字段，再筛出管控要素。接着沿着「模型所属事项 → 稽核单元 → 制度标准」查询关系数据，确认候选字段的编码是否仍被引用。校验命中时应提示字段和引用它的制度，便于用户直接处理。</p>
+<p>我也梳理了经济事项、费用行为的更新和导入入口。导入选项的名称很难完整表达实际写入行为，尤其是初次导入和后续导入的差异。判断是否校验，应该基于该入口最终会移除哪些字段。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>批量写入方式和业务上的删除是两层语义。只观察数据库执行了哪些删除语句，会把重新写入的字段也算进去。先计算差集，再检查引用，可以把这条约束独立出来。方法只需要接收候选字段和查询范围，普通保存与导入就能复用同一套判断。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="梳理发票识别链路，并设计带地点核验、置信度分流和修订记录的机票纠错流程。">
+  <title>从发票 OCR 排查到海外机票地点纠错设计 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/10/ocr-airport-location-correction/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>从发票 OCR 排查到海外机票地点纠错设计</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-10">2026-06-10</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>这天的笔记记录了两个识别相关问题。一是发票字段识别不稳定，排查中确认能通过 IDEA 远程调试沿 Feign 调用追到服务端。二是海外机票地点补全。OCR 可能读错相似字符、混淆城市与机场，或把多语言地名识别成另一种拼写，进而影响行程和费用数据。</p>
+<h2 id="我梳理的纠错流程"><a href="#我梳理的纠错流程" class="headerlink" title="我梳理的纠错流程"></a>我梳理的纠错流程</h2><p>进入地点补全时先保留 OCR 原文，核验城市、机场名称或 IATA、ICAO 代码，并检查机场与城市的归属。遇到无匹配或明显冲突时，再结合出发地、目的地和航线信息，让模型给出候选与置信度。项目中已有调用 Moonshot 整理凭证备注的实现，可以作为接入方式的参考。</p>
+<p>需求草案把结果分成三档。置信度达到 90% 的候选可进入自动采纳流程，60% 至低于 90% 的交由人工确认，更低的进入人工处理。修订记录应保留原始值、建议值和处理结果，便于后续核对。这里记录的是当时的方案设计。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>模型给出的分数需要用真实误识别样本检验。即使模型对候选很有把握，自动写回之前仍应核对地点数据。如果机场代码和地点名称不能同时解释原文，就应转为人工确认。这样能把模型的文本理解用在生成候选上，也让每次自动更正有可追溯的依据。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

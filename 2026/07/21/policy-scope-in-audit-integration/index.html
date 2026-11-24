@@ -1,0 +1,60 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="为稽核单元查询补上制度维度，排除其他制度遗留记录对结果的干扰。">
+  <title>联调时找回稽核查询缺失的制度边界 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/21/policy-scope-in-audit-integration/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>联调时找回稽核查询缺失的制度边界</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-21">2026-07-21</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>联调稽核事项改造时，我发现查询可能返回多条稽核单元记录，其中混入了其他制度下的历史配置。只用事项关联去查，拿到的数据范围比当前业务所需的更宽。联调确认需要按当前 <code>policyId</code> 补充过滤，并与稽核单元数据里承载该含义的 <code>answerCode</code> 字段对应。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>多条结果首先提示我核对查询条件到底描述了什么。按事项查到的记录可以横跨多个制度，当前业务要定位的是某项制度下的记录。由于数据库字段名和业务参数名也不同，这个映射应在查询层清晰表达。我会用「同一个事项、两套制度」来验证该条件，单制度样本很难暴露这个问题。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

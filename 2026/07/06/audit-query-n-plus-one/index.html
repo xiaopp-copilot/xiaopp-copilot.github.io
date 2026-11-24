@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="通过批量查询和按记录索引优化稽核接口，保留旧接口的过滤语义。">
+  <title>消除三处 N+1，把稽核查询从 2.81 秒降到 580 毫秒 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/06/audit-query-n-plus-one/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>消除三处 N+1，把稽核查询从 2.81 秒降到 580 毫秒</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-06">2026-07-06</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>查询稽核点关联制度文件时，耗时分散在三处逐项调用里，包括一次远程 RPC 路径和两处本地数据库路径。我沿着响应组装逐项核对数据来源，将能批量取得的数据提前加载，再用请求内的 <code>Map</code> 按 ID 索引。笔记记录的同一接口平均耗时从 <strong>2.81 秒降到 580 毫秒</strong>，降幅约 <strong>79%</strong>。</p>
+<h2 id="批量化时保留原有语义"><a href="#批量化时保留原有语义" class="headerlink" title="批量化时保留原有语义"></a>批量化时保留原有语义</h2><p>原单条查询会取回未删除的记录，后续由业务层处理启停条件。已有批量接口会先筛去未启用的数据，直接替换会让这些记录消失。我新增了包含未启用状态的批量查询，沿用原来的删除过滤和业务判断。</p>
+<p>外部 SDK 的远程调用无法直接改造，我评估了按单个 ID 缓存、TTL 为 5 分钟的 Redis 方案。它让不同请求可以复用相同记录，也避免为每种 ID 组合创建缓存键。排查过程中遇到 Jackson 无法处理 <code>LocalDateTime</code> 的问题，通过注册 <code>JavaTimeModule</code> 并使用 ISO-8601 字符串解决。SDK 已内置缓存，这一层 Redis 是否保留需要结合命中情况和维护成本再判断。</p>
+<p>同日还处理了两个补全人员信息接口。一个按实际查询条件增加复合索引，将机构维度放在首列。另一个给按用户 ID 的查询增加 Redis 缓存。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>我会先数清循环里每种 I&#x2F;O 的调用次数，同时写下旧查询的过滤条件。前者决定优化能省掉多少工作，后者决定加速后能否返回相同业务结果。请求内的索引可以随请求释放。跨请求缓存则需要另外考虑数据新鲜度和冷缓存行为，复盘时也应将两者的收益分开验证。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

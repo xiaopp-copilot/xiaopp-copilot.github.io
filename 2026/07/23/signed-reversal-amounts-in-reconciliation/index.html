@@ -1,0 +1,61 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调整两类收入稽核规则，明确冲正金额的数据符号与业务口径。">
+  <title>收入对账规则里的冲正金额为什么用加号 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/23/signed-reversal-amounts-in-reconciliation/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>收入对账规则里的冲正金额为什么用加号</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-23">2026-07-23</time>
+      
+        <a href="/categories/internship/">实习</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>我调整了急诊费用导入收款、日间手术导入收款两条收入稽核规则。两者都需要将原始费用合计与对应的预交金冲正记录合并，再和结算日报的收款金额比较。冲正明细先按各自业务类型过滤，防止两类收款互相串入。</p>
+<h2 id="表达式与业务口径"><a href="#表达式与业务口径" class="headerlink" title="表达式与业务口径"></a>表达式与业务口径</h2><p>业务上说的是扣除冲正金额，表里保存的冲正金额已经带负号。因此规则用「原始合计 + 带符号的冲正金额」。例如原始金额为 100、冲正记录为 −20，相加得到 80。展示别名仍按业务习惯表达「扣除冲正」，方便核对报表的人员理解。</p>
+<h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>财务公式里的符号要从数据的记账口径推出来。只看需求中的「减」字，很容易把负数减成正向增加。写规则时，我会用一组可以手算的数据核对数值方向，再加上无冲正和不同业务类型混在一起的样本，分别验证运算和过滤条件。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>
