@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="以结构化偏好为例，设计记忆的写入、检索、纠正和删除流程。">
+  <title>让 Agent 的用户记忆可以纠正、隔离和删除 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/04/05/agent-user-memory-lifecycle/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>让 Agent 的用户记忆可以纠正、隔离和删除</h1>
+    <div class="entry-meta">
+      <time datetime="2026-04-05">2026-04-05</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>用户说「这次用英文写」，与「以后我的周报都用英文」表达了不同的范围。我会把会话要求留在当前任务，把明确的长期偏好写成一条可更新的记录，并保存用户、适用范围、证据和更新时间。这样未来遇到新要求，可以定位到该修改哪一条。</p>
+<h2 id="写入和读取分别做判断"><a href="#写入和读取分别做判断" class="headerlink" title="写入和读取分别做判断"></a>写入和读取分别做判断</h2><p>写入时先把候选条目分类成事实、长期偏好或当前要求。只存对后续任务有价值、来源明确的条目，避免把模型推断和文档里的文字当成用户确认。读取时先按账号和工作空间筛选，再根据任务挑选少量相关记忆。保留结构化值和来源，用户才能追问系统为什么用了某条偏好。</p>
+<h2 id="测一下改口和删除"><a href="#测一下改口和删除" class="headerlink" title="测一下改口和删除"></a>测一下改口和删除</h2><p>我会构造四轮对话。用户先设定周报语言，随后只对一次周报临时换语言，再修改长期偏好，最后要求删除。分别验证临时要求结束后长期偏好能恢复、明确纠正能覆盖旧值、删除后索引与缓存也不会继续命中。用另一账号跑相同问题，可以顺手验证隔离边界。</p>
+<p>我的取舍是先做少量、可解释的记忆。等验证了纠正与删除，再扩大可保存的类型。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§3.1。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

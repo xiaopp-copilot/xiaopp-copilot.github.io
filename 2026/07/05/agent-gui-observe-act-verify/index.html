@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在带筛选的列表页，用语义定位、截图和目标状态校验构建界面操作循环。">
+  <title>GUI Agent 每次操作后，如何确认界面状态真的变了 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/05/agent-gui-observe-act-verify/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>GUI Agent 每次操作后，如何确认界面状态真的变了</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-05">2026-07-05</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>假设让 Agent 在报表界面切到「上月」并读取摘要。我会先获取当前页面、可用筛选控件和原选中值，然后再操作。界面提供 DOM 或无障碍树时，优先根据角色和名称定位。截图可以帮助确认遮挡、弹窗和视觉状态。使用坐标时，应基于当前截图，并准备处理窗口大小和布局变化。</p>
+<h2 id="操作之后读什么"><a href="#操作之后读什么" class="headerlink" title="操作之后读什么"></a>操作之后读什么</h2><p>点击「上月」后重新观察界面，确认筛选值已改变、加载结束，而且报表标题或数据区与目标月份一致。导航、弹窗或列表刷新后，旧元素索引可能已经失效，应重新获取可用控件。界面文字是待处理数据。遇到不在任务内的弹窗或提交动作，运行时按既定权限处理。</p>
+<h2 id="我的验证样本"><a href="#我的验证样本" class="headerlink" title="我的验证样本"></a>我的验证样本</h2><p>准备一个加载慢的页面、两个名字相同但区域不同的按钮，再加一次窗口缩放。观察 Agent 能否用区域和角色消歧，能否等待新内容出现才读取，以及最终返回的摘要确实属于目标月份。调用返回成功只是一步证据，页面显示的目标状态才决定任务是否完成。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§9.8。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

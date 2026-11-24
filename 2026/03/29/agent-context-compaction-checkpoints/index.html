@@ -1,0 +1,68 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用结构化检查点、近期消息和证据引用维持 Agent 的长任务连续性。">
+  <title>长任务压缩上下文时，怎样保住进度和证据 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/03/29/agent-context-compaction-checkpoints/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>长任务压缩上下文时，怎样保住进度和证据</h1>
+    <div class="entry-meta">
+      <time datetime="2026-03-29">2026-03-29</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>让一个 Agent 连续核对几十份文档，最长的消息通常是工具返回的原文。窗口接近上限时，我会保留最近几轮的具体操作，把较早的内容归纳成可恢复的检查点。检查点里最重要的是后续工作还要依赖的状态。</p>
+<h2 id="压缩时保留什么"><a href="#压缩时保留什么" class="headerlink" title="压缩时保留什么"></a>压缩时保留什么</h2><ul>
+<li>用户目标、已经确认的约束、完成条件和明确排除项。</li>
+<li>已完成和待处理的对象、关键决定及理由、失败后尝试过的方法。</li>
+<li>可重新读取的证据位置，例如文档 ID、章节、文件路径或查询结果 ID。</li>
+<li>在运行时单独保存的进行中工具调用及其 ID。压缩历史时保持调用和结果配对。</li>
+</ul>
+<p>长任务可以另外附上一小段运行时状态，记录剩余预算和正在执行的任务。状态应来自实际工具和任务记录。压缩优先移除可回查的冗长结果，并给下一次响应留出空间。</p>
+<h2 id="如何验收压缩"><a href="#如何验收压缩" class="headerlink" title="如何验收压缩"></a>如何验收压缩</h2><p>我会在同一批任务中比较压缩前后能否继续处理剩余文档、正确引用较早的证据，并延续用户曾纠正过的约束。摘要变短只能说明减少了 token。压缩后可以准确继续，才说明保住了任务需要的信息。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§2.6–2.7。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

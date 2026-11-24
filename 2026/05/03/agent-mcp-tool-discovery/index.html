@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="通过轻量目录筛选候选工具，按需读取完整参数并检查授权范围。">
+  <title>MCP 工具越来越多时，怎样做按需发现 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/05/03/agent-mcp-tool-discovery/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>MCP 工具越来越多时，怎样做按需发现</h1>
+    <div class="entry-meta">
+      <time datetime="2026-05-03">2026-05-03</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>多个 MCP 服务接入后，工具列表容易出现相近的名字。例如知识库、项目文档和工单都能搜索，模型得先知道该去哪一处查。我的做法是给应用一个轻量目录，包含服务来源、工具用途、适用对象以及读写类型，再按任务选出少量候选。</p>
+<h2 id="发现和执行各自做什么"><a href="#发现和执行各自做什么" class="headerlink" title="发现和执行各自做什么"></a>发现和执行各自做什么</h2><p>发现阶段先根据任务和可访问资源过滤，再向模型提供候选工具的名称、用途和来源。确认使用某项能力后，才加载完整的参数 Schema 和必要示例。执行前仍要检查当前用户的资源权限，工具的 <code>service + name</code> 身份也应可追踪，防止名字相同的能力被混用。目录里的来源描述属于检索信息，授权由应用和服务端核验。</p>
+<h2 id="怎么知道工具选对了"><a href="#怎么知道工具选对了" class="headerlink" title="怎么知道工具选对了"></a>怎么知道工具选对了</h2><p>用「查某项目手册」和「查某个工单的历史」做对照样本，再加一个同名项目、跨空间权限不同的场景。记录候选是否含正确工具、最终调用是否正确、为选择多花了多少时间。我的取舍是先用固定目录或简单筛选，当工具增长后再做更细的检索，并继续保留同一组回归样本。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§4.3、§4.8。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

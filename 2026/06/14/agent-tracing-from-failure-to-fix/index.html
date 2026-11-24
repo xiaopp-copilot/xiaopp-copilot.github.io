@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在一条任务 Trace 内关联模型、检索、工具和最终校验，以失败路径驱动小步修复。">
+  <title>用 Trace 定位 Agent 失败发生在哪一步 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/14/agent-tracing-from-failure-to-fix/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>用 Trace 定位 Agent 失败发生在哪一步</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-14">2026-06-14</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>知识库助手回答错了，可能是资料没被索引、检索漏了依据、模型忽略了证据，或者结果校验没执行。我会用一个 Trace ID 串起任务，并把每次模型请求、检索、工具调用与结果校验记成有父子关系的 span。</p>
+<h2 id="运行记录里保留什么"><a href="#运行记录里保留什么" class="headerlink" title="运行记录里保留什么"></a>运行记录里保留什么</h2><p>模型 span 记录版本、时间和用量，检索 span 记录查询意图和候选资料 ID，工具 span 记录类型、参数校验结果、耗时和错误类别。最终 span 记录任务是否满足验收条件。含隐私的正文和参数可以保留脱敏摘要或受控引用，让调试能定位到具体路径，也便于限制原文的访问和保留期限。</p>
+<h2 id="从一条失败记录提出下一步"><a href="#从一条失败记录提出下一步" class="headerlink" title="从一条失败记录提出下一步"></a>从一条失败记录提出下一步</h2><p>例如用户问新版接口的限制，回答引用了旧版。先查新版是否出现在检索候选，再查候选是否进入模型输入。新版从未进入候选，就先测版本过滤与召回。新版有依据但回答引用了旧版，就检查资料排序和生成约束。我会为定位到的原因保存一个回归用例，改动一项后重放同类样本，看看失败是减少了，还是转移到了下一步。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§6.8–6.10。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用可检查的脚本完成统计，并记录数据口径、异常行和核对结果。">
+  <title>让 Agent 用可复跑的脚本处理表格数据 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/05/24/agent-generated-code-data-processing/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>让 Agent 用可复跑的脚本处理表格数据</h1>
+    <div class="entry-meta">
+      <time datetime="2026-05-24">2026-05-24</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>给出一组 CSV，让 Agent 按月份汇总订单金额。我的做法是让模型先确认列名、日期解析方式、币种和退款口径，再生成短脚本处理。脚本以源文件为只读输入，输出汇总表与异常行数量。金额计算使用明确的十进制精度，保留可核查的转换过程。</p>
+<h2 id="执行时有哪些约束"><a href="#执行时有哪些约束" class="headerlink" title="执行时有哪些约束"></a>执行时有哪些约束</h2><p>把程序放到隔离的工作目录，限制输入文件、输出目录和运行时间。常规统计无需开放外部网络。脚本读到无效日期和金额时，应记录行号并报告如何处理。输出至少保留每月记录数、纳入汇总的金额和被跳过的行数，方便复跑与对账。</p>
+<h2 id="用第二份证据核对结果"><a href="#用第二份证据核对结果" class="headerlink" title="用第二份证据核对结果"></a>用第二份证据核对结果</h2><p>我会用一个可手算的小表覆盖正常订单、负数退款、缺少日期和重复记录。再检查各月金额之和与有效行总金额一致，纳入与排除的记录数能对上原表。生成的脚本还可以保存下来，以同一口径处理下一批数据。对经常重复的任务，这比每次让模型在对话里临时计算更容易复核。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§5.2。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

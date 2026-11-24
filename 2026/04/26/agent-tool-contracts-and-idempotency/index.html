@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="示例展示工具输入校验、结果证据、权限检查和安全重试的实现思路。">
+  <title>给 Agent 工具设计清晰的参数、错误和重试语义 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/04/26/agent-tool-contracts-and-idempotency/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>给 Agent 工具设计清晰的参数、错误和重试语义</h1>
+    <div class="entry-meta">
+      <time datetime="2026-04-26">2026-04-26</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>一个「为草稿添加标签」的工具，描述至少要说清对象类型、支持的标签和成功后返回什么。我会用 JSON Schema 限制参数形态，让执行端再检验草稿存在性、当前权限和业务状态。结构正确只能证明数据满足接口格式，真正是否能执行还要由业务系统决定。</p>
+<h2 id="工具应返回可处理的结果"><a href="#工具应返回可处理的结果" class="headerlink" title="工具应返回可处理的结果"></a>工具应返回可处理的结果</h2><p>成功时返回草稿 ID、写入后的标签和必要版本信息。参数错误返回错误字段及允许值，权限不足直接结束该路径，短暂服务繁忙才允许在预算内重试。网络超时有时意味着远端已经写入，所以修改接口宜支持幂等键，或提供按请求 ID 查询结果的能力。</p>
+<p>工具边界可以沿读写划分。查询草稿与修改草稿使用独立权限，写入要求按动作确认。能用同一个查询工具表示的相似筛选就合在一起，避免工具列表堆出一批只差一个参数的方法。</p>
+<h2 id="我的联调样本"><a href="#我的联调样本" class="headerlink" title="我的联调样本"></a>我的联调样本</h2><p>依次测试错误标签、无权限、正常写入和写入成功但客户端超时。最后一个场景要核对重复请求没有生成第二次写入，同时能查到第一次的结果。测试过这些路径，模型遇到错误时才有信息决定下一步。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§4.1–4.2、§4.5。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

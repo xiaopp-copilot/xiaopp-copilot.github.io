@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从文档切块到可追溯回答，分别验证检索召回与答案依据。">
+  <title>搭一个能说明答案来自哪里的 RAG 基线 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/04/12/agent-rag-baseline-and-evidence/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>搭一个能说明答案来自哪里的 RAG 基线</h1>
+    <div class="entry-meta">
+      <time datetime="2026-04-12">2026-04-12</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>从几十篇技术文档起步，我会先建一套最小检索流程。按标题和段落切块，给每块保存文档 ID、标题路径、版本和定位信息。查询时先限制数据范围，再取候选片段。生成端带着这些片段回答，并给出能回到原段落的引用。证据缺少时，说明还缺什么。</p>
+<h2 id="先让检索问题可定位"><a href="#先让检索问题可定位" class="headerlink" title="先让检索问题可定位"></a>先让检索问题可定位</h2><p>向量检索适合召回表达不同、含义相近的段落。错误码、接口名、产品缩写等精确词也适合用倒排检索。我会先跑两条候选通路，分别查看命中情况，再考虑融合结果。排查时记录候选片段及其来源，方便判断是切块不合适、召回没命中，还是后续排序压低了有效证据。</p>
+<h2 id="做一套能反复跑的样本"><a href="#做一套能反复跑的样本" class="headerlink" title="做一套能反复跑的样本"></a>做一套能反复跑的样本</h2><p>为问题标注支持答案的章节，覆盖精确词、改写问法、跨段信息和资料中无答案几类。先看前 K 条结果是否包含依据，再看最终回答有没有引用对应段落。检索找到了正确资料而回答仍出错时，下一步应检查上下文组装和生成约束。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§3.2。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

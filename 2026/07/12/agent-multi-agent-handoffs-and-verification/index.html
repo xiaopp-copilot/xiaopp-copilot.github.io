@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="对照单 Agent 基线，设计能并行取证、验证产物并避免共享文件冲突的协作流程。">
+  <title>多 Agent 协作从可验证的分工开始 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/07/12/agent-multi-agent-handoffs-and-verification/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>多 Agent 协作从可验证的分工开始</h1>
+    <div class="entry-meta">
+      <time datetime="2026-07-12">2026-07-12</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>做一份发布检查报告，可以把文档核对与测试结果读取交给两个 Agent 并行处理。它们各自从不同材料获得证据，主 Agent 负责对齐版本并汇总。发布与否仍由有权限的人或确定的流程决定。这样的分工有明确输入和输出，也容易判断并行是否带来收益。</p>
+<h2 id="交接信息和共享状态"><a href="#交接信息和共享状态" class="headerlink" title="交接信息和共享状态"></a>交接信息和共享状态</h2><p>交接至少包含目标、输入版本、产出格式、证据位置和未解决项。各子任务只写自己的文件或目录，由主 Agent 合并。审核任务应能读取独立证据，例如执行结果或规则检查输出。遇到结论冲突，应回看材料版本和检测方法，再决定是否需要人工确认。</p>
+<h2 id="先与单-Agent-基线对照"><a href="#先与单-Agent-基线对照" class="headerlink" title="先与单 Agent 基线对照"></a>先与单 Agent 基线对照</h2><p>我会让单 Agent 和协作版跑同一组样本，记录验收通过率、实际用时和总成本，再模拟一个子任务失败及两个子任务的结果不一致。主流程应保留已验证部分，明确缺少的证据。只有分工引入了新证据、独立验证或明确的并行收益，协作成本才有对应的回报。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§10.2–10.5。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

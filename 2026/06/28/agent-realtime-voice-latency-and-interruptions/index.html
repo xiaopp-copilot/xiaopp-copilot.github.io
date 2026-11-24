@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="为级联语音链路记录各阶段时间，并用轮次 ID 管理用户打断。">
+  <title>搭语音 Agent 时，先量延迟和打断恢复 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/28/agent-realtime-voice-latency-and-interruptions/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>搭语音 Agent 时，先量延迟和打断恢复</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-28">2026-06-28</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>做语音问答原型时，可以先用语音活动检测、语音识别、语言模型和语音合成组成级联链路。我会记录用户停止说话、识别结果可用、模型开始输出、音频开始播放这几个时点。这样能看到延迟来自等停顿、等模型，还是音频合成和播放队列。</p>
+<h2 id="流式处理与打断"><a href="#流式处理与打断" class="headerlink" title="流式处理与打断"></a>流式处理与打断</h2><p>识别可以逐步返回文本，稳定片段进入下一阶段，模型生成的完整短句可交给 TTS。用户在播放时开口，新轮次应能让旧轮次停止生成，清掉仍在排队的旧音频，并在会话状态里保留用户实际听到的部分。后端工具若已经启动，则根据工具是否可取消来处理，并按轮次隔离晚到的结果。</p>
+<h2 id="我会如何验证"><a href="#我会如何验证" class="headerlink" title="我会如何验证"></a>我会如何验证</h2><p>用短问句、自然停顿、长问题和播到一半打断几种场景，记录从用户停说到第一段可听音频的时间，也记录开始打断到旧音频停下的时间。听一遍录制结果，核对系统有没有把思考时的停顿误当句末。只有这组基线测清楚，才好判断是否需要更紧耦合的音频架构。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§9.2–9.6。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

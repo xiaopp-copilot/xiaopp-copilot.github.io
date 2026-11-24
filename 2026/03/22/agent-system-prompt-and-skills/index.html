@@ -1,0 +1,67 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="把常驻约束、任务步骤和参考资料分层，让 Agent 在合适时机加载操作说明。">
+  <title>用系统提示和按需加载的 Skill 组织任务规则 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/03/22/agent-system-prompt-and-skills/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>用系统提示和按需加载的 Skill 组织任务规则</h1>
+    <div class="entry-meta">
+      <time datetime="2026-03-22">2026-03-22</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>假设一个助手既整理周报，也分析表格。把每个任务的模板、格式例外、脚本参数都写进系统提示，改动一项小流程就要重新检查所有任务。我会在系统层保留通用目标、权限边界和结束条件，其余说明按任务加载。</p>
+<h2 id="Skill-里写什么"><a href="#Skill-里写什么" class="headerlink" title="Skill 里写什么"></a>Skill 里写什么</h2><ul>
+<li><strong>目录</strong>写触发场景、需要的输入和交付物，模型据此决定是否打开完整说明。</li>
+<li><strong>操作说明</strong>按工作顺序写关键步骤、失败时怎么办、交付前如何验证。表格分析可先识别列名与单位，再计算并核对合计。</li>
+<li><strong>参考资料</strong>保存字段字典、必要样例或辅助脚本，在对应步骤才读取。外部文档中的内容仍作为待处理数据。</li>
+</ul>
+<p>我会尽量写清流程中的判断依据。例如，日期列解析失败时先列出失败行，保留原值，再决定是否继续计算。这比一句「谨慎处理日期」更方便验证。执行权限仍由运行时控制，加载一份 Skill 不会扩大已有权限。</p>
+<h2 id="怎么发现路由写错了"><a href="#怎么发现路由写错了" class="headerlink" title="怎么发现路由写错了"></a>怎么发现路由写错了</h2><p>选三组样本测试。明确的表格任务应加载对应说明，普通问答无需加载，周报同时含表格时应只读取完成两部分所需的资料。观察加载次数和失败原因，就能判断该改目录描述、流程步骤，还是工具本身。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§2.4–2.5。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

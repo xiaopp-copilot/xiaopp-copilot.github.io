@@ -1,0 +1,67 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用只读工单助手说明 Agent 循环、运行时约束与结果验证。">
+  <title>从一个工具调用循环搭起最小 Agent · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/03/01/agent-first-loop-and-harness/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>从一个工具调用循环搭起最小 Agent</h1>
+    <div class="entry-meta">
+      <time datetime="2026-03-01">2026-03-01</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>做一个能回答「这张工单现在卡在哪一步」的助手，可以先接两个只读工具，一个取工单状态，一个取最近的状态变更。用户用自然语言指出工单，模型选择工具并给出参数，运行时执行，模型再根据返回数据组织结论。这个循环有了真实的输入和输出，才值得扩展到更复杂的流程。</p>
+<h2 id="运行时负责哪些决定"><a href="#运行时负责哪些决定" class="headerlink" title="运行时负责哪些决定"></a>运行时负责哪些决定</h2><p>我会把一次任务做成「请求模型 → 校验并执行工具 → 回填结果 → 决定是否继续」的循环。最终回答里的工单状态应能回到具体的工具结果。运行时管理工具白名单、参数、最大轮数和超时。固定的业务步骤可以写成代码节点，例如先校验当前用户有权访问工单，再允许读取详情。读取哪些已授权的字段可以交给模型决定。</p>
+<h2 id="第一个版本怎么验收"><a href="#第一个版本怎么验收" class="headerlink" title="第一个版本怎么验收"></a>第一个版本怎么验收</h2><ul>
+<li>给一张已结束的工单，检查回答能指出最后一次状态变化和发生时间。</li>
+<li>给一个不存在的工单号，检查系统如实返回查无结果，并保留可读的失败原因。</li>
+<li>模拟工具超时和模型重复调用，确认任务能在预算内停止，并告诉用户目前确认了什么。</li>
+</ul>
+<p>我的取舍是先做一个有明确终点的只读闭环。新增能力时，先问业务系统能提供什么证据验证完成，再决定把多少决策权交给模型。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§1.1–1.2。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

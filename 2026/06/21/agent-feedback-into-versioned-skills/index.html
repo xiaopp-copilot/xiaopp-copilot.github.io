@@ -1,0 +1,62 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从重复失败中提炼候选操作规则，经复核、回归和版本控制后再复用。">
+  <title>把失败轨迹整理成可以验证和回滚的 Skill 改动 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/06/21/agent-feedback-into-versioned-skills/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>把失败轨迹整理成可以验证和回滚的 Skill 改动</h1>
+    <div class="entry-meta">
+      <time datetime="2026-06-21">2026-06-21</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>如果表格整理 Agent 反复漏掉单位，我会先挑几条失败轨迹和一条成功轨迹，找共同的前置条件。问题可能出在列名解析，也可能出在输出时漏了单位。能归纳出的经验应写成一条具体规则，例如「汇总前检查每列的单位，单位混用时先标出异常行」。</p>
+<h2 id="经验落到合适的位置"><a href="#经验落到合适的位置" class="headerlink" title="经验落到合适的位置"></a>经验落到合适的位置</h2><p>稳定事实存知识库，带判断条件的步骤写进 Skill，重复且可确定验证的计算做成工具。让我更愿意复用一项经验的，是它有适用范围、来源和验收条件。过去的轨迹里可能有偶然成功的操作，也可能含敏感数据。只提炼能解释、可重测的部分，保留原样本的受控引用。</p>
+<h2 id="改动如何生效"><a href="#改动如何生效" class="headerlink" title="改动如何生效"></a>改动如何生效</h2><p>让 Agent 提出小范围差异，由维护者审核并跑回归。样本同时覆盖触发条件和无需应用新规则的正常输入。验证后给 Skill 标版本，记录变更原因和回滚目标。如果规则扩大了适用范围或改变工具权限，需要由运行时的权限配置单独评估。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§8.4–8.5。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

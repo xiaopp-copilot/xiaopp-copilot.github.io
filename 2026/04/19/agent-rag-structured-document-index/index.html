@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="给文本块补齐所属版本与章节，在命中细节后按需展开原文。">
+  <title>用标题树和原文定位改进长文档检索 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/04/19/agent-rag-structured-document-index/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>用标题树和原文定位改进长文档检索</h1>
+    <div class="entry-meta">
+      <time datetime="2026-04-19">2026-04-19</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>知识库里出现一句「超限时应暂停处理」，单独看这一段，很难知道它说的是哪项业务、适用哪个版本。对于有清晰章节的手册，我会把文档结构保留下来，让检索片段带着可追溯的上下文。</p>
+<h2 id="先做一层轻量索引"><a href="#先做一层轻量索引" class="headerlink" title="先做一层轻量索引"></a>先做一层轻量索引</h2><p>给每个片段存标题路径、文档版本、父章节 ID、页码或原文偏移。索引词可以包含章节名和一段短说明，展示证据时仍读取原文。查到叶子片段后，需要完整条件时再展开父章节或邻近段落。表格中的数值也应连同表头、单位和脚注一起呈现。</p>
+<p>复杂问题可以拆成几次检索，例如分别找「提交条件」和「例外条件」。运行时要记录已经查过的主题及剩余检索预算，避免围着同一批片段反复搜索。</p>
+<h2 id="用容易串版本的案例验证"><a href="#用容易串版本的案例验证" class="headerlink" title="用容易串版本的案例验证"></a>用容易串版本的案例验证</h2><p>我会放入同标题、不同年份的两份手册，再问一个只在新版修改过的限制。检查是否命中正确版本、能否展开足够的限定条件，以及引用是否回到正确页。只有样本显示跨实体关联经常缺证据时，才值得进一步考虑知识图谱等更重的结构。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§3.3。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

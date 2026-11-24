@@ -1,0 +1,68 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="将定位、最小修改、测试和失败恢复接成一个可回查的代码任务。">
+  <title>Coding Agent 修 Bug 时，怎样从复现走到验证 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/05/17/agent-coding-from-reproduction-to-verification/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>Coding Agent 修 Bug 时，怎样从复现走到验证</h1>
+    <div class="entry-meta">
+      <time datetime="2026-05-17">2026-05-17</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>给 Coding Agent 一个「含空列的 CSV 导入失败」的问题，我会先提供触发样本、入口和预期行为。Agent 应从项目的现有读入逻辑出发，跑一个能区分旧行为和期望结果的样本，再定位最小修改范围。</p>
+<h2 id="每一步留下可复核的证据"><a href="#每一步留下可复核的证据" class="headerlink" title="每一步留下可复核的证据"></a>每一步留下可复核的证据</h2><ol>
+<li>检查工作区约束与已有改动，读取入口、相关模块及现有测试。</li>
+<li>过一遍含空列的输入，记录失败位置，确定是解析、校验还是保存出错。</li>
+<li>修改产生问题的路径，复跑样本和相关测试，再查看差异有无无关变更。</li>
+<li>交付时列出改动和实际跑过的命令，区分已验证行为与仍缺少的环境条件。</li>
+</ol>
+<p>运行时可以按失败原因提供不同恢复路径。临时网络错误可以在预算内重试。参数无效要改输入。依赖缺失时，可转向现有的局部检查并保留限制。连续出现同一错误时，应停下来重新定位。</p>
+<h2 id="我的验收标准"><a href="#我的验收标准" class="headerlink" title="我的验收标准"></a>我的验收标准</h2><p>同一个普通 CSV 和带空列的 CSV 都经过正常入口，只有后者的错误行为被修正。测试通过之后还要看差异是否尊重已有改动。能解释「改在哪里、用什么证据确认」，比只收到一句「已修复」更方便交接。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§5.1。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

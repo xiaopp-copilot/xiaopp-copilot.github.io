@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用任务 ID、完成事件和检查点支持长任务的查询、取消与恢复。">
+  <title>把耗时工具改造成可取消的异步任务 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/2026/05/10/agent-async-jobs-and-events/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    <article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
+    <h1>把耗时工具改造成可取消的异步任务</h1>
+    <div class="entry-meta">
+      <time datetime="2026-05-10">2026-05-10</time>
+      
+        <a href="/categories/agent/">Agent</a>
+      
+    </div>
+  </header>
+  <div class="prose"><p>一份大型报表要生成几十秒，用户中途可能问进度，也可能更改筛选条件。我会让工具启动任务后马上返回 <code>job_id</code> 和当前状态，后台工作进程继续生成。任务完成、失败或取消时再发事件，运行时据此恢复会话或更新界面。</p>
+<h2 id="把状态转换写进运行时"><a href="#把状态转换写进运行时" class="headerlink" title="把状态转换写进运行时"></a>把状态转换写进运行时</h2><p>每个任务保存所属会话、输入版本、状态和结果引用。完成事件带任务 ID 与唯一事件 ID，消费者据此去重。收到取消请求时先记录取消意图，由工作进程确认能否终止。若用户已改了条件，旧任务晚到的结果仍可供查看，但要按版本隔离，避免覆盖当前输出。</p>
+<p>事件也需要不同的处理方式。用户明确取消当前工作可以优先处理，普通进度可以合并，完全独立的只读任务可以并行。涉及外部写入的工作应留下可查询的状态，以便在重启时确认此前做到哪一步。</p>
+<h2 id="我会模拟的三种时序"><a href="#我会模拟的三种时序" class="headerlink" title="我会模拟的三种时序"></a>我会模拟的三种时序</h2><p>重复投递同一个完成事件、取消时结果恰好返回、任务执行中服务重启。三种情况都应能得到明确终态。验收既要看 Agent 的回复，也要查任务表和最终产物，确认没有发生重复展示或错误覆盖。</p>
+<p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§4.7。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>
