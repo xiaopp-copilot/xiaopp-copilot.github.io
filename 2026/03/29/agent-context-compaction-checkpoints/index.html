@@ -52,6 +52,12 @@
 <li>在运行时单独保存的进行中工具调用及其 ID。压缩历史时保持调用和结果配对。</li>
 </ul>
 <p>长任务可以另外附上一小段运行时状态，记录剩余预算和正在执行的任务。状态应来自实际工具和任务记录。压缩优先移除可回查的冗长结果，并给下一次响应留出空间。</p>
+<h2 id="在真的超窗之前做一次检查点"><a href="#在真的超窗之前做一次检查点" class="headerlink" title="在真的超窗之前做一次检查点"></a>在真的超窗之前做一次检查点</h2><p>应用每轮组装完准备发送的消息后，先估算输入 token，同时留出模型输出空间与可能追加的工具结果。对于一个假设的 32k 窗口，可以给输出预留 4k，再留一段缓冲，超过剩余预算时才压缩。具体数字从任务中常见的请求体量反推。较短的检索结果可以继续保留，重复日志和已存档附件优先缩短。</p>
+<p>下面是一份检查点结构示意。原始工具输出由应用单独存储，模型按需用引用找回。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">goal:</span> <span class="string">为产品手册标出需要核对的旧版本页面</span></span><br><span class="line"><span class="attr">constraints:</span> [<span class="string">只处理手册第三版</span>, <span class="string">结论必须能定位到页</span>]</span><br><span class="line"><span class="attr">completed:</span> [<span class="string">安装</span>, <span class="string">配置</span>]</span><br><span class="line"><span class="attr">pending:</span> [<span class="string">备份</span>, <span class="string">恢复</span>]</span><br><span class="line"><span class="attr">evidence:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">claim:</span> <span class="string">安装章节包含两个旧命令</span></span><br><span class="line">    <span class="attr">pointer:</span> <span class="string">manual-v3#page=12</span></span><br><span class="line"><span class="attr">open_question:</span> <span class="string">配置章节的例外条款是否适用于旧客户端</span></span><br><span class="line"><span class="attr">running_calls:</span> [<span class="string">scan-backup-17</span>]</span><br></pre></td></tr></table></figure>
+
+<h2 id="摘要与任务状态用不同来源"><a href="#摘要与任务状态用不同来源" class="headerlink" title="摘要与任务状态用不同来源"></a>摘要与任务状态用不同来源</h2><p>压缩模型负责归纳文本，已提交的工具调用、是否经过用户确认以及剩余预算仍由运行时提供。若摘要写了「备份已处理」，任务表却显示扫描仍在运行，恢复时应以任务表为准。摘要也要注明覆盖的起止轮次，便于将后面没有压缩的消息连在后面，避免遗漏用户新补的限制。</p>
+<p>我的测试会安排一次中途纠正。例如处理到一半，用户要求忽略早于第三版的文件。压缩后复跑还要验证这条修改仍生效，且已完成、未完成集合都有正确的版本边界。当较旧的证据只剩引用时，测试应实际走一次回查，确认该引用还能定位原文。</p>
 <h2 id="如何验收压缩"><a href="#如何验收压缩" class="headerlink" title="如何验收压缩"></a>如何验收压缩</h2><p>我会在同一批任务中比较压缩前后能否继续处理剩余文档、正确引用较早的证据，并延续用户曾纠正过的约束。摘要变短只能说明减少了 token。压缩后可以准确继续，才说明保住了任务需要的信息。</p>
 <p>参考李博杰《深入理解 AI Agent：设计原理与工程实践》§2.6–2.7。</p>
 </div>
