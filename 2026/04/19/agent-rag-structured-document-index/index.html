@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>用标题树和原文定位改进长文档检索</h1>
-    <div class="entry-meta">
-      <time datetime="2026-04-19">2026-04-19</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-04-19">2026-04-19</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>知识库里出现一句「超限时应暂停处理」，单独看这一段，很难知道它说的是哪项业务、适用哪个版本。对于有清晰章节的手册，我会把文档结构保留下来，让检索片段带着可追溯的上下文。</p>
 <h2 id="先做一层轻量索引"><a href="#先做一层轻量索引" class="headerlink" title="先做一层轻量索引"></a>先做一层轻量索引</h2><p>给每个片段存标题路径、文档版本、父章节 ID、页码或原文偏移。索引词可以包含章节名和一段短说明，展示证据时仍读取原文。查到叶子片段后，需要完整条件时再展开父章节或邻近段落。表格中的数值也应连同表头、单位和脚注一起呈现。</p>

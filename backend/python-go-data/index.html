@@ -1,0 +1,61 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 Python 脚本与异步 I/O、Go 并发、Flink 水位线和 Spark 流批处理的补充追问。">
+  <title>Python、Go 与流批处理：后端补充面试题 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/python-go-data/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Python、Go 与流批处理：后端补充面试题</h1>
+    
+  </header>
+  <div class="prose"><h2 id="Python-能处理哪些后端工作"><a href="#Python-能处理哪些后端工作" class="headerlink" title="Python 能处理哪些后端工作"></a>Python 能处理哪些后端工作</h2><p><strong>博思软件面试原题。</strong> 面试问能否用 Python 编写简单脚本、处理数据。一个可讲清楚的例子是按行读取 JSON Lines 日志，校验和提取字段，按错误码聚合并输出统计。处理较大文件时可迭代读取，坏记录单独记录，结果保留输入数、成功数和失败数供核对。Java 和 Spring 常承担业务接口与微服务，Python 可承担数据处理、批处理脚本和服务集成。搜索 API 的 Python 示例见 <a href="/backend/elasticsearch/">Elasticsearch</a>。</p>
+<p><strong>GIL 影响什么？</strong> 在常见带 GIL 的 CPython 中，同一解释器内通常只有一个线程执行 Python 字节码。线程仍可重叠等待 I&#x2F;O，CPU 密集型 Python 代码可以考虑多进程或支持释放 GIL 的原生库。具体还要看解释器构建模式。</p>
+<p><strong>多个慢接口怎么并行调用？</strong> 支持异步的 HTTP 客户端配合 <code>asyncio</code> 可在等待网络时切换协程。需要控制并发上限，设置超时和取消处理。同步阻塞调用仍会卡住事件循环，要换异步库或显式交给线程执行。异步主要改善并发等待和资源占用，单次外部调用本身的时延仍由下游决定。</p>
+<h2 id="Go-的并发怎么理解"><a href="#Go-的并发怎么理解" class="headerlink" title="Go 的并发怎么理解"></a>Go 的并发怎么理解</h2><p>Go 是静态类型、编译型语言，部署时常见单个可执行文件。Goroutine 是 Go 运行时调度的轻量执行单元，Channel 用于不同 Goroutine 之间通信和同步。实际服务中还需用 <code>context.Context</code> 串联请求生命周期、超时和取消，避免后台任务常驻。Go 常见于 Docker、Kubernetes 等云原生系统。</p>
+<h2 id="Flink-和-Spark-各适合什么工作"><a href="#Flink-和-Spark-各适合什么工作" class="headerlink" title="Flink 和 Spark 各适合什么工作"></a>Flink 和 Spark 各适合什么工作</h2><p>Spark 常用于离线统计和周期报表。Flink 常用于低延迟的持续计算，例如实时游戏指标、营收看板。Spark 也有 Structured Streaming，常用微批方式，Flink 也能执行有界批作业。选型可以围绕时延、状态规模、事件时间、容错和已有数据架构展开。</p>
+<p><strong>Watermark 为什么能处理乱序事件？</strong> 水位线表示系统对事件时间处理进度的估计。比如允许事先估出的乱序范围后，窗口可在水位线达到相应结束点时触发，晚到事件按窗口配置更新、侧输出或丢弃。多输入算子的水位线会受较慢或空闲分区影响，空闲分区需要合适的检测策略。</p>
+<p><strong>什么是状态后端？</strong> Flink 中的有状态算子会保存计数、聚合和窗口中间结果等数据。状态后端管理运行时状态的存储与访问，检查点帮助故障后恢复一致状态。要说明端到端处理语义，还应把数据源可重放性、检查点与下游写入的事务或幂等能力放在一起看。<a target="_blank" rel="noopener" href="https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/time/">Apache Flink 时间概念</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

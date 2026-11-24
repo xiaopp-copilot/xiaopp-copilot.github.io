@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>用 JSON 路径识别嵌套字段的迁移与删除</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-04">2026-06-04</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-04">2026-06-04</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>更新扩展字段树后，有些还被制度引用的管控要素失去了显示名称。最初的字段差集思路在基本信息和报销单的扩展字段树上遇到了一个边界。子字段换了父节点，旧 JSON 路径也会消失，直接按旧路径判定删除会产生误差。</p>
 <h2 id="两处需要区分的标识"><a href="#两处需要区分的标识" class="headerlink" title="两处需要区分的标识"></a>两处需要区分的标识</h2><p>我梳理了 Java 服务里的路径比较。一级路径在新模型中找不到时，可列为删除候选。对于更深的路径，还要检查它是否随父节点迁移，或是否已经以新完整路径保留。两个检查都没有命中，才进入删除与引用判断。</p>

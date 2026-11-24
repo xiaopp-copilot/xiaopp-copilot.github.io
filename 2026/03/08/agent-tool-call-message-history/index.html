@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>把工具调用和结果正确写回 Agent 的消息历史</h1>
-    <div class="entry-meta">
-      <time datetime="2026-03-08">2026-03-08</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-03-08">2026-03-08</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>模型一次请求「查工单状态」与「查最近变更」，两个工具很可能以不同顺序完成。如果只把返回文本依次拼起来，下一轮容易把一条结果归到错误的调用。运行时应保存模型那条调用消息，并用调用 ID 将每条结构化结果关联回去。</p>
 <h2 id="怎样记录一轮调用"><a href="#怎样记录一轮调用" class="headerlink" title="怎样记录一轮调用"></a>怎样记录一轮调用</h2><ol>

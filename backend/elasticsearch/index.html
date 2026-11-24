@@ -1,0 +1,94 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从 Elasticsearch 的常用查询、映射和聚合，延伸到分片、路由、刷新与落盘。">
+  <title>Elasticsearch：查询 DSL、分片路由与 Lucene · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/elasticsearch/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Elasticsearch：查询 DSL、分片路由与 Lucene</h1>
+    
+  </header>
+  <div class="prose"><h2 id="常用-API-和字段映射"><a href="#常用-API-和字段映射" class="headerlink" title="常用 API 和字段映射"></a>常用 API 和字段映射</h2><p>写入文档可用 <code>PUT /index/_doc/id</code>，由服务端生成 ID 时可用 <code>POST /index/_doc</code>。读取用 <code>GET</code>，删除文档或索引用 <code>DELETE</code>，通过 <code>_search</code> 查询，用 <code>_bulk</code> 批量写入、更新或删除，批量结果还要检查单条失败。</p>
+<p><code>Mapping</code> 中的 <code>text</code> 经过分词，适合全文搜索，<code>keyword</code> 常用于精确匹配、排序和聚合。其他类型有 <code>integer</code>、<code>long</code>、<code>date</code>、<code>boolean</code>、<code>geo_point</code> 等。<code>analyzer</code> 指定分析器，如内置 Standard 或额外安装的中文 IK 分析器。<code>index</code> 控制常规索引能力，部分字段类型也能通过 doc values 执行较慢的查询。</p>
+<h2 id="查询、过滤和聚合怎么写"><a href="#查询、过滤和聚合怎么写" class="headerlink" title="查询、过滤和聚合怎么写"></a>查询、过滤和聚合怎么写</h2><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>DSL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>精确匹配</td>
+<td><code>term</code> 匹配一个已索引的词项，<code>terms</code> 匹配一组值，<code>range</code> 用 <code>gt/gte/lt/lte</code> 设定范围，<code>exists</code> 判断是否有索引值</td>
+</tr>
+<tr>
+<td>全文检索</td>
+<td><code>match</code> 对输入分析后匹配，<code>match_phrase</code> 匹配带词序的短语，<code>multi_match</code> 搜索多个字段</td>
+</tr>
+<tr>
+<td>布尔组合</td>
+<td><code>must</code> 必须满足并参与评分，<code>filter</code> 必须满足但不计分且可能被缓存，<code>must_not</code> 用于排除，<code>should</code> 通常用于可选匹配或加分</td>
+</tr>
+<tr>
+<td>聚合</td>
+<td><code>aggs</code> 下的 <code>terms</code> 做分桶，<code>avg/sum/max/min</code> 做统计，<code>cardinality</code> 近似去重计数，<code>date_histogram</code> 按时间区间分桶</td>
+</tr>
+</tbody></table>
+<p>有 <code>must</code> 或 <code>filter</code> 时，<code>should</code> 默认可以一个都不匹配。业务需要至少命中一项时，显式设 <code>minimum_should_match</code>。<code>sort</code> 指定稳定排序，<code>_source</code> 选择返回内容，<code>highlight</code> 高亮匹配。浅分页用 <code>from/size</code>，默认结果窗口通常限制至 10,000，深分页可使用稳定排序的 <code>search_after</code>，并结合 PIT 保持一致视图。</p>
+<h3 id="Python-检索示例"><a href="#Python-检索示例" class="headerlink" title="Python 检索示例"></a>Python 检索示例</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> elasticsearch <span class="keyword">import</span> Elasticsearch</span><br><span class="line"></span><br><span class="line">es = Elasticsearch(<span class="string">&quot;http://localhost:9200&quot;</span>)</span><br><span class="line">result = es.search(</span><br><span class="line">    index=<span class="string">&quot;books&quot;</span>,</span><br><span class="line">    query=&#123;</span><br><span class="line">        <span class="string">&quot;bool&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;must&quot;</span>: [&#123;<span class="string">&quot;match&quot;</span>: &#123;<span class="string">&quot;title&quot;</span>: <span class="string">&quot;Python 编程&quot;</span>&#125;&#125;],</span><br><span class="line">            <span class="string">&quot;filter&quot;</span>: [</span><br><span class="line">                &#123;<span class="string">&quot;range&quot;</span>: &#123;<span class="string">&quot;price&quot;</span>: &#123;<span class="string">&quot;lte&quot;</span>: <span class="number">100</span>&#125;&#125;&#125;,</span><br><span class="line">                &#123;<span class="string">&quot;term&quot;</span>: &#123;<span class="string">&quot;status&quot;</span>: <span class="string">&quot;published&quot;</span>&#125;&#125;,</span><br><span class="line">            ],</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    sort=[&#123;<span class="string">&quot;publish_date&quot;</span>: <span class="string">&quot;desc&quot;</span>&#125;],</span><br><span class="line">    size=<span class="number">10</span>,</span><br><span class="line">    source=[<span class="string">&quot;title&quot;</span>, <span class="string">&quot;author&quot;</span>, <span class="string">&quot;price&quot;</span>],</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> hit <span class="keyword">in</span> result[<span class="string">&quot;hits&quot;</span>][<span class="string">&quot;hits&quot;</span>]:</span><br><span class="line">    <span class="built_in">print</span>(hit[<span class="string">&quot;_id&quot;</span>], hit[<span class="string">&quot;_source&quot;</span>])</span><br></pre></td></tr></table></figure>
+
+<p>示例用本机地址表达搜索逻辑。运行时要按实际集群配置 TLS 和认证，字段也要符合已有索引的 mapping。</p>
+<h2 id="主分片和副本怎么分布"><a href="#主分片和副本怎么分布" class="headerlink" title="主分片和副本怎么分布"></a>主分片和副本怎么分布</h2><p><strong>滴滴一面原题。</strong> 一个索引可拆分为多个主分片。副本是主分片的拷贝，提供故障切换与额外读容量，主分片和相应副本应安排在不同节点。写入按 <code>_routing</code> 定位，默认使用文档的 <code>_id</code>。使用自定义 routing 时，后续按 ID 读、改、删需要带一致的路由键。</p>
+<p>常规路由可以用 <code>shard = hash(routing) % num_primary_shards</code> 理解。沿用旧路由的索引会先对 <code>num_routing_shards</code> 取模，再除以 <code>routing_factor</code> 并取整，其中 <code>routing_factor = num_routing_shards / num_primary_shards</code>。实际公式看索引创建版本和是否使用分区路由。</p>
+<p>主分片数无法在原索引上直接改成任意值。可以通过 reindex 迁移到新索引，满足条件时也能用 split 或 shrink 生成另一个索引。副本数可以按需要调整。<a target="_blank" rel="noopener" href="https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-routing-field">Elasticsearch 路由字段</a></p>
+<h2 id="Lucene-段、refresh、flush-有什么关系"><a href="#Lucene-段、refresh、flush-有什么关系" class="headerlink" title="Lucene 段、refresh、flush 有什么关系"></a>Lucene 段、refresh、flush 有什么关系</h2><p>每个分片对应独立的 Lucene 索引。索引由不可变 Segment 组成，可包含倒排索引、用于排序和聚合的列式 doc values，以及取回字段所用的 stored fields。</p>
+<ol>
+<li>写入操作更新内存缓冲并记录到 translog，用于恢复未包含在 Lucene 提交中的操作。</li>
+<li><strong>Refresh</strong> 让新的段可搜索，形成近实时可见性。常见刷新间隔约一秒，取决于部署、索引活动及配置。可搜索和已持久化是分别由刷新、日志和提交决定的。</li>
+<li><strong>Flush</strong> 做 Lucene commit 并切换 translog 代，提交过的旧日志可按机制清理。触发条件看版本和配置。</li>
+<li><strong>Merge</strong> 在后台合并小段，重写存活文档。已经打删除标记的数据可在此时被物理清理，合并会消耗磁盘 I&#x2F;O。</li>
+</ol>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

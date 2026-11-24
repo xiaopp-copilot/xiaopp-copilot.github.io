@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>从一组有明确通过条件的 Agent 评估开始</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-31">2026-05-31</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-31">2026-05-31</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>如果要评估一个知识库助手，我会为每个任务保存输入、资料版本、应引用的证据和通过条件。例如问「离线报表是否能补跑」，测试要同时检查引用的章节、适用条件和遗漏信息。资料没有依据时，如实说明也算通过。</p>
 <h2 id="通过条件要尽量可执行"><a href="#通过条件要尽量可执行" class="headerlink" title="通过条件要尽量可执行"></a>通过条件要尽量可执行</h2><p>先用程序检查必填字段、引用地址、数据库终态或输出文件。难以写成规则的部分，例如解释是否覆盖关键条件，可以用人工标准或模型打分，并先与人工标注对齐。任务集要覆盖正常请求、输入不完整、工具失败和无权限等情况。每次运行重置初始状态，尽量避免前一次结果影响本次。</p>

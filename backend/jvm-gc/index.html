@@ -1,0 +1,117 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="记录堆分代、Eden 与 Survivor、过早晋升、引用类型和常见 JVM 参数。">
+  <title>JVM 与 GC：堆分代、对象晋升和排障参数 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/jvm-gc/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>JVM 与 GC：堆分代、对象晋升和排障参数</h1>
+    
+  </header>
+  <div class="prose"><h2 id="JVM-为什么把堆分代"><a href="#JVM-为什么把堆分代" class="headerlink" title="JVM 为什么把堆分代"></a>JVM 为什么把堆分代</h2><p>多数对象生命周期短，熬过多次年轻代回收的对象往往能存活更久。针对这种分布，分代收集器可以频繁回收年轻代，减少扫描整个堆的次数，对老年代用适合高存活率的算法。具体布局、回收阶段和默认值随收集器及 JDK 版本变化。</p>
+<p>经典布局有 Eden 和两块 Survivor，初始分配通常发生在 Eden。年轻代回收把 Eden 和当前 Survivor 的存活对象复制到另一块 Survivor，满足条件的对象晋升到老年代，随后两块 Survivor 交换角色。一块接收、一块清空，使存活对象和可用空间保持连续，也省去在唯一 Survivor 中边保留边整理的开销。传统配置常用 Eden、S0、S1 大约 8:1:1 说明这个布局。老年代的回收可涉及标记清除或标记整理。G1 等收集器按区域管理堆，Young GC、Mixed GC 和 Full GC 各有自己的触发条件，Full GC 的范围通常涉及整个堆。 <a target="_blank" rel="noopener" href="https://docs.oracle.com/en/java/javase/21/gctuning/garbage-collector-implementation.html">Oracle JVM GC 调优指南</a></p>
+<h2 id="新生代对象过早晋升会发生什么"><a href="#新生代对象过早晋升会发生什么" class="headerlink" title="新生代对象过早晋升会发生什么"></a>新生代对象过早晋升会发生什么</h2><p>正常晋升与对象年龄、Survivor 容量和收集器的动态策略有关。在部分收集器和配置中，年龄上限常见为 15。Survivor 容纳不下、大对象分配或突发流量使对象存活到下一轮 GC，都可能加速老年代占用增长。</p>
+<p>当老年代很快被填满，收集器可能更早启动并发回收或触发 Full GC，造成 STW 停顿变长、P99 恶化、请求超时和 CPU 使用率升高。若对象一直被集合或缓存持有，可达对象回收不了，最终可能出现 <code>OutOfMemoryError: Java heap space</code>。排查时，先用 GC 日志区分短时晋升、频繁回收和回收后占用持续上涨。怀疑泄漏时，再分析堆转储中的对象保留路径。</p>
+<h2 id="Java-的四种引用"><a href="#Java-的四种引用" class="headerlink" title="Java 的四种引用"></a>Java 的四种引用</h2><table>
+<thead>
+<tr>
+<th>引用</th>
+<th>回收语义与用法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>强引用</td>
+<td><code>Object obj = new Object()</code> 是常见例子。对象保持强可达时会被保留</td>
+</tr>
+<tr>
+<td>软引用</td>
+<td>对象仅软可达时，收集器可按内存需要清理，曾用于内存敏感缓存</td>
+</tr>
+<tr>
+<td>弱引用</td>
+<td>收集器发现对象仅弱可达时可清理，常见于 <code>ThreadLocalMap</code> 的键与 <code>WeakHashMap</code></td>
+</tr>
+<tr>
+<td>虚引用</td>
+<td>配合 <code>ReferenceQueue</code> 跟踪对象回收阶段，可用于资源清理通知</td>
+</tr>
+</tbody></table>
+<p><strong>静态变量在哪里？</strong> JMM 将实例字段、静态字段和数组元素都当作共享变量讨论。问 HotSpot 的具体实现时，静态字段与类对应的镜像对象相关，静态引用指向的普通 Java 对象也在堆上，类元数据则属于另一层概念。在线程池场景中也要区分弱引用键与可能仍被线程强引用的 <code>ThreadLocalMap</code> 值，处理完请求应调用 <code>remove()</code>。</p>
+<h2 id="面试问到的常用-JVM-参数"><a href="#面试问到的常用-JVM-参数" class="headerlink" title="面试问到的常用 JVM 参数"></a>面试问到的常用 JVM 参数</h2><p>这是按排查目的整理的一组常见选项，参数含义以目标 JDK 和收集器为准。</p>
+<table>
+<thead>
+<tr>
+<th>目的</th>
+<th>参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>指定初始堆和最大堆</td>
+<td><code>-Xms</code>、<code>-Xmx</code></td>
+</tr>
+<tr>
+<td>设置单个线程栈大小</td>
+<td><code>-Xss</code></td>
+</tr>
+<tr>
+<td>限制类元数据空间</td>
+<td><code>-XX:MaxMetaspaceSize</code></td>
+</tr>
+<tr>
+<td>选择收集器</td>
+<td>如 <code>-XX:+UseG1GC</code></td>
+</tr>
+<tr>
+<td>记录 GC 日志</td>
+<td>JDK 9+ 可用 <code>-Xlog:gc*:file=gc.log:time,uptime,level,tags</code></td>
+</tr>
+<tr>
+<td>OOM 时生成堆转储</td>
+<td><code>-XX:+HeapDumpOnOutOfMemoryError</code>、<code>-XX:HeapDumpPath</code></td>
+</tr>
+</tbody></table>
+<p>排查问题时，可以用 <code>jcmd &lt;PID&gt; VM.flags</code> 查看实际 JVM 参数，用 <code>jcmd &lt;PID&gt; GC.heap_info</code> 快速确认堆状态。线程级高 CPU 排查见 <a href="/backend/linux-docker-maven/">Linux 与服务排障</a>。<a target="_blank" rel="noopener" href="https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html">Oracle java 命令参考</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

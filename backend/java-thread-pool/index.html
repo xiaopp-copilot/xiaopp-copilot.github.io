@@ -1,0 +1,123 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从 ThreadPoolExecutor 的七个参数讲到任务拒绝、线程数估算、队列容量和线上观测。">
+  <title>Java 线程池：执行顺序、拒绝策略与容量估算 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/java-thread-pool/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Java 线程池：执行顺序、拒绝策略与容量估算</h1>
+    
+  </header>
+  <div class="prose"><h2 id="七个构造参数"><a href="#七个构造参数" class="headerlink" title="七个构造参数"></a>七个构造参数</h2><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>corePoolSize</code></td>
+<td>接收任务时优先创建工作线程的数量目标，可预启动核心线程</td>
+</tr>
+<tr>
+<td><code>maximumPoolSize</code></td>
+<td>当前允许的工作线程数上限</td>
+</tr>
+<tr>
+<td><code>keepAliveTime</code>、<code>unit</code></td>
+<td>超过核心数量的线程的空闲回收时间与单位，开启 <code>allowCoreThreadTimeOut</code> 后也适用核心线程</td>
+</tr>
+<tr>
+<td><code>workQueue</code></td>
+<td>等待执行的任务队列</td>
+</tr>
+<tr>
+<td><code>threadFactory</code></td>
+<td>统一创建、命名线程并配置守护属性、异常处理等</td>
+</tr>
+<tr>
+<td><code>handler</code></td>
+<td>任务无法接收时调用的 <code>RejectedExecutionHandler</code></td>
+</tr>
+</tbody></table>
+<p><code>ArrayBlockingQueue</code> 是固定容量的数组队列。<code>LinkedBlockingQueue</code> 可显式指定容量，默认上限是 <code>Integer.MAX_VALUE</code>，大流量会先累积排队时延和内存压力。<code>SynchronousQueue</code> 无缓冲，提交与接收需要直接交接。选队列时要一起考虑并发上限、瞬时积压和拒绝后的业务行为。</p>
+<h2 id="任务执行顺序"><a href="#任务执行顺序" class="headerlink" title="任务执行顺序"></a>任务执行顺序</h2><ol>
+<li>工作线程数小于 <code>corePoolSize</code> 时，优先尝试创建工作线程执行新任务。判断用的是工作线程总数。</li>
+<li>达到核心线程数且池仍运行时，尝试把任务放入工作队列。入队后还会复查池状态，并在有任务但无工作线程时补充线程。</li>
+<li>入队失败时，尝试创建非核心额度内的工作线程执行任务。</li>
+<li>无法继续接收任务时触发拒绝策略。典型情形是队列满且达到线程上限，或线程池已关闭。</li>
+</ol>
+<p>常见 OpenJDK 实现用一个 <code>AtomicInteger ctl</code> 同时保存运行状态和工作线程数，高 3 位为运行状态，低 29 位为线程数。<code>RUNNING</code> 接收新任务，<code>SHUTDOWN</code> 停止接收并继续处理队列，<code>STOP</code> 停止接收和处理队列并尝试中断工作线程，随后进入 <code>TIDYING</code> 和 <code>TERMINATED</code>。<a target="_blank" rel="noopener" href="https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/concurrent/ThreadPoolExecutor.java">OpenJDK ThreadPoolExecutor 源码</a></p>
+<h2 id="拒绝任务会报什么错"><a href="#拒绝任务会报什么错" class="headerlink" title="拒绝任务会报什么错"></a>拒绝任务会报什么错</h2><p><strong>滴滴一面原题。</strong> 默认 <code>AbortPolicy</code> 抛出 <code>java.util.concurrent.RejectedExecutionException</code>。其他三种策略按任务价值和调用线程的职责来选。</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CallerRunsPolicy</code></td>
+<td>池仍运行时，由提交者同步执行任务，减慢提交速度。调用者线程的响应时间也会增加</td>
+</tr>
+<tr>
+<td><code>DiscardPolicy</code></td>
+<td>静默丢弃当前任务</td>
+</tr>
+<tr>
+<td><code>DiscardOldestPolicy</code></td>
+<td>池仍运行时，移除队头等待任务，再尝试提交当前任务</td>
+</tr>
+</tbody></table>
+<p>也可以实现 <code>rejectedExecution(Runnable task, ThreadPoolExecutor executor)</code>，按任务语义计数告警、明确返回失败，或将可恢复任务落库或交给 MQ。已被丢弃且从未运行的 <code>Future</code> 可能一直等不到结果，选用静默策略时要处理这个调用方行为。</p>
+<h2 id="线程数和队列容量怎么估算"><a href="#线程数和队列容量怎么估算" class="headerlink" title="线程数和队列容量怎么估算"></a>线程数和队列容量怎么估算</h2><p><strong>滴滴一面追问。</strong> CPU 密集型任务可从 <code>N + 1</code> 试起，额外线程可覆盖偶发暂停。I&#x2F;O 密集型可先用 <code>2 × N</code> 或 <code>2 × N + 1</code> 粗估，再按实测等待时间修正。Brian Goetz 给出的估算式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">线程数 ≈ N × U × (1 + W / C)</span><br></pre></td></tr></table></figure>
+
+<p><code>N</code> 是进程可用的 CPU 数，可从 <code>Runtime.getRuntime().availableProcessors()</code> 观察，<code>U</code> 是目标 CPU 利用率，<code>W</code> 是每个任务的平均等待时间，<code>C</code> 是平均 CPU 计算时间。目标利用率取 1 时，式子可写成 <code>((W + C) / C) × N</code>。例如 8 核、等待 90 ms、计算 10 ms，取 <code>U = 1</code> 得到 80 个线程，取 0.8 得到 64 个。这只是初始压测点，数据库连接池、下游并发额度和容器 CPU 配额都会影响结果。</p>
+<p>队列容量可先按 <code>可持续处理速率（任务/秒）× 可接受排队时间（秒）</code> 估量。若要覆盖短时突发，再用 <code>(瞬时到达速率 − 可持续处理速率) × 突发持续秒数</code> 估计积压，并检查延迟和内存是否允许。持续输入大于处理能力时，应靠限流、背压或拒绝策略约束积压。</p>
+<h2 id="线上调优看什么"><a href="#线上调优看什么" class="headerlink" title="线上调优看什么"></a>线上调优看什么</h2><p>在 Spring Boot 中把参数放到配置文件，通过 <code>@Value</code> 或配置属性加载。普通异步任务与定时任务使用独立池，后者可以采用 <code>ScheduledExecutorService</code>。给每个池配置有业务意义的线程名前缀，例如 <code>schedule-pool-%d</code>。可以在 <code>afterExecute</code> 捕获执行异常，使用 <code>submit</code> 时还要检查已经完成的 <code>Future</code>，因为任务异常通常被保存到结果里。</p>
+<p>Dynamic-TP、Hippo4j 可用于运行时调参，能力取决于线程池和队列实现。用 Prometheus、Grafana 看活跃线程、队列堆积和等待时间、执行耗时、拒绝次数和 P99，再通过全链路压测找吞吐拐点。线上高 CPU 的定位步骤见 <a href="/backend/linux-docker-maven/">Linux 与服务排障</a>。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

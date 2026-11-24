@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>排查覆盖导入后找不到费用稽核配置的问题</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-18">2026-06-18</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-18">2026-06-18</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>导入费用模型后，部分费用行为原有关联的稽核标准看起来被清空了。我从导入参数一路查到稽核单元和关系记录，发现问题集中在关联 ID 的变化。新建的配置可能暂时使用费用行为 ID，已经挂到经济事项下的旧配置则引用关系记录 ID。导入生成新关系后，稽核单元如果仍保留旧 ID，查询就找不回原标准。</p>
 <h2 id="排查与方案"><a href="#排查与方案" class="headerlink" title="排查与方案"></a>排查与方案</h2><p>我梳理了两种处理思路。已有关系被替换时，可以建立旧关联与新关联的映射，让稽核单元指向新的关系。业务上新增关联且需要继承配置时，则需要评估复制旧配置的做法，避免直接移动记录影响原关联。排查中也确认，关系更新会触发升级逻辑，导入的影响会传递到费用稽核。</p>

@@ -1,0 +1,102 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理进程和 IPC、常用命令、远程复制、Docker 宿主机挂载、Maven 打包以及多节点日志定位。">
+  <title>Linux、Docker 与 Maven：部署、打包和线上排障 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/linux-docker-maven/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Linux、Docker 与 Maven：部署、打包和线上排障</h1>
+    
+  </header>
+  <div class="prose"><h2 id="进程、线程和进程间通信"><a href="#进程、线程和进程间通信" class="headerlink" title="进程、线程和进程间通信"></a>进程、线程和进程间通信</h2><p>进程通常拥有独立地址空间和资源，操作系统以线程为执行调度单位。线程共享进程的堆和文件描述符等资源，各有调用栈、程序计数器和寄存器状态。进程隔离可以缩小普通故障的范围，线程出现未捕获异常时，具体影响由语言运行时和应用处理方式决定。</p>
+<p>IPC 常见方式有管道、消息队列、共享内存、信号、信号量和 Socket。共享内存可减少复制，但共享状态需要另做同步。信号常用于通知，信号量用于协调并发访问，Socket 也可以跨机器。</p>
+<h2 id="Linux-常用命令"><a href="#Linux-常用命令" class="headerlink" title="Linux 常用命令"></a>Linux 常用命令</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文件和目录</td>
+<td><code>ls -l</code> 看详情，<code>ls -a</code> 看隐藏项，<code>cd</code> 切目录，<code>pwd</code> 查路径，<code>mkdir -p</code> 建多层目录，<code>touch</code> 创建文件或更新其时间，<code>cp -r</code> 复制目录，<code>mv</code> 移动或重命名，<code>find . -name &#39;*.log&#39;</code> 按名称找文件，<code>rm -rf</code> 强制递归删除</td>
+</tr>
+<tr>
+<td>查看或编辑文本</td>
+<td><code>cat</code> 查看，<code>more</code>、<code>less</code> 分屏，<code>head -n 10</code> 读开头，<code>tail -n 10</code> 读末尾，<code>tail -f</code> 跟踪追加，<code>grep</code> 按内容过滤，<code>vi</code>、<code>vim</code> 编辑</td>
+</tr>
+<tr>
+<td>权限与用户</td>
+<td><code>chmod 755 FILE</code> 设置权限，<code>chown USER:GROUP FILE</code> 设置属主和组，<code>sudo</code> 按授权切换身份执行，<code>whoami</code> 查当前身份，<code>passwd</code> 改密码</td>
+</tr>
+<tr>
+<td>系统和进程</td>
+<td><code>ps -ef</code> 查进程，<code>top</code> 看资源，<code>kill PID</code> 请求退出，<code>kill -9 PID</code> 强制结束，<code>free -h</code> 查看内存，<code>df -h</code> 查文件系统容量，<code>du -sh DIR</code> 查目录大小，<code>uptime</code> 看运行时长和负载</td>
+</tr>
+<tr>
+<td>网络和端口</td>
+<td><code>ip addr</code> 或 <code>ifconfig</code> 查网卡，<code>ping HOST</code> 测试 ICMP，<code>ss -lntup</code> 或 <code>netstat -tunlp</code> 查监听，<code>lsof -i:PORT</code> 查端口关联进程，<code>telnet HOST PORT</code> 测试 TCP，<code>curl -X GET URL</code> 测试 HTTP 接口</td>
+</tr>
+<tr>
+<td>压缩归档</td>
+<td><code>tar -zcvf archive.tar.gz DIR</code> 打包，<code>tar -zxvf archive.tar.gz</code> 解包，<code>zip -r archive.zip DIR</code> 和 <code>unzip archive.zip</code> 处理 ZIP</td>
+</tr>
+<tr>
+<td>辅助</td>
+<td><code>man</code> 查手册，<code>history</code> 查历史，<code>clear</code> 清屏，<code>echo &quot;$PATH&quot;</code> 查命令搜索路径，<code>ln -s SRC LINK</code> 建符号链接</td>
+</tr>
+</tbody></table>
+<p><strong>cp 能远程复制吗？</strong> 深势科技一面问过。<code>cp</code> 操作当前系统可访问的文件路径，所以可复制已经挂载的远程文件系统。要经 SSH 直接传到远端，可用 <code>scp local.txt user@host:/path/</code>。目录重复同步或大文件传输还可以用 <code>rsync -av --partial local/ user@host:/path/</code>，借助增量复制和保留部分传输进度来降低重传成本。</p>
+<h2 id="Docker-怎么访问宿主机上的文件和服务"><a href="#Docker-怎么访问宿主机上的文件和服务" class="headerlink" title="Docker 怎么访问宿主机上的文件和服务"></a>Docker 怎么访问宿主机上的文件和服务</h2><p><strong>锐捷一面原题。</strong> 镜像打包应用和依赖，容器提供隔离的运行环境。Linux 容器用 namespaces 管理可见范围，用 cgroups 约束资源，通常共享宿主内核。</p>
+<p>可以用 Bind Mount 将特定宿主机路径挂载到容器中，例如 <code>--mount type=bind,src=/srv/app/config,dst=/app/config,readonly</code>，也可以使用 <code>-v</code>。用 <code>docker inspect</code> 查挂载来源与目标，用 <code>docker exec</code> 在容器里确认路径、文件和权限。Docker 管理的 named volume 适合容器数据持久化或多个容器共享文件。</p>
+<p>若要访问宿主机的 MySQL、Redis 等网络服务，Docker Desktop 常提供 <code>host.docker.internal</code>，原生 Linux 可按环境配置 <code>--add-host=host.docker.internal:host-gateway</code>，也可评估 Host 网络。还要确认服务监听地址、访问权限、防火墙和容器网络。</p>
+<h2 id="Maven-的打包命令"><a href="#Maven-的打包命令" class="headerlink" title="Maven 的打包命令"></a>Maven 的打包命令</h2><p><code>mvn package</code> 运行到打包阶段，<code>mvn clean package</code> 先清理旧构建输出。<code>-DskipTests</code> 跳过常见的测试执行阶段，通常仍会编译测试。<code>-Dmaven.test.skip=true</code> 可让支持该属性的编译和测试插件跳过测试编译与执行。要把产物安装到本机 Maven 仓库供其他项目引用，用 <code>mvn clean install</code>。<a target="_blank" rel="noopener" href="https://maven.apache.org/surefire/maven-surefire-plugin/examples/skipping-tests.html">Maven Surefire 跳过测试说明</a></p>
+<h2 id="Java-服务-CPU-飙升怎么定位"><a href="#Java-服务-CPU-飙升怎么定位" class="headerlink" title="Java 服务 CPU 飙升怎么定位"></a>Java 服务 CPU 飙升怎么定位</h2><p><strong>面试原题。</strong> 先确认影响节点和时间范围，再判断是哪个进程、哪个线程和哪段代码。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">top</span><br><span class="line">top -H -p <span class="string">&quot;<span class="variable">$pid</span>&quot;</span></span><br><span class="line"><span class="built_in">printf</span> <span class="string">&#x27;%x\n&#x27;</span> <span class="string">&quot;<span class="variable">$tid</span>&quot;</span></span><br><span class="line">jstack <span class="string">&quot;<span class="variable">$pid</span>&quot;</span> &gt; thread.txt</span><br></pre></td></tr></table></figure>
+
+<p>把 <code>top</code> 找到的十进制线程 ID 转成十六进制，对照线程转储里的 <code>nid=0x…</code>。可间隔采样多份转储，区别短暂热点、持续忙循环、锁竞争和 GC 活跃。观察 JVM 内存与 GC 参数见 <a href="/backend/jvm-gc/">JVM 与 GC</a>。</p>
+<p><strong>多节点日志怎么找？</strong> 我用 Loki 汇集日志、Grafana 查询与查看。在明确异常窗口后，按 TraceID、节点、时间和错误码关联同一次调用，沿网关、服务和下游定位首个异常点。定位哪个节点开始异常后，再回看当时版本、请求量、GC 和线程状态。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

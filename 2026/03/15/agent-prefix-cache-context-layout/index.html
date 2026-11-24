@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>把 Agent 的上下文排成能复用的稳定前缀</h1>
-    <div class="entry-meta">
-      <time datetime="2026-03-15">2026-03-15</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-03-15">2026-03-15</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>一个多轮 Agent 往往会重复发送系统规则、工具定义和历史消息。上游支持前缀缓存时，相同前缀的计算有机会复用。我会先检查应用是否把当前时间、请求编号和随机顺序的配置放进了规则开头。这些数据每轮都变化，容易缩短后续可复用的前缀。</p>
 <h2 id="一个可实施的排列"><a href="#一个可实施的排列" class="headerlink" title="一个可实施的排列"></a>一个可实施的排列</h2><p>将有版本的系统规则和稳定的工具定义放在前面。用户消息、临时检索片段与工具结果按任务推进追加。动态状态只在需要时进入上下文，并遵守所用消息协议。工具列表如果来自多个模块，也要固定序列化顺序。规则确实更新时切换版本，缓存自然重新积累。</p>

@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>收入对账规则里的冲正金额为什么用加号</h1>
-    <div class="entry-meta">
-      <time datetime="2026-07-23">2026-07-23</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-07-23">2026-07-23</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>我调整了急诊费用导入收款、日间手术导入收款两条收入稽核规则。两者都需要将原始费用合计与对应的预交金冲正记录合并，再和结算日报的收款金额比较。冲正明细先按各自业务类型过滤，防止两类收款互相串入。</p>
 <h2 id="表达式与业务口径"><a href="#表达式与业务口径" class="headerlink" title="表达式与业务口径"></a>表达式与业务口径</h2><p>业务上说的是扣除冲正金额，表里保存的冲正金额已经带负号。因此规则用「原始合计 + 带符号的冲正金额」。例如原始金额为 100、冲正记录为 −20，相加得到 80。展示别名仍按业务习惯表达「扣除冲正」，方便核对报表的人员理解。</p>

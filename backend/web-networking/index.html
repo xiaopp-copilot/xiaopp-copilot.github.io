@@ -1,0 +1,93 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 TCP 可靠传输和握手、HTTP 方法、TLS 证书、认证续期、登录保护与 SSE 追问。">
+  <title>网络与 Web：TCP、HTTPS、认证和 SSE · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/web-networking/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>网络与 Web：TCP、HTTPS、认证和 SSE</h1>
+    
+  </header>
+  <div class="prose"><h2 id="TCP-怎么保证可靠，和-UDP-有什么区别"><a href="#TCP-怎么保证可靠，和-UDP-有什么区别" class="headerlink" title="TCP 怎么保证可靠，和 UDP 有什么区别"></a>TCP 怎么保证可靠，和 UDP 有什么区别</h2><p>两者都是传输层协议。TCP 面向连接，为应用提供有序字节流。它用序列号定位字节、用 ACK 确认，用超时或丢失检测触发重传，用校验和检测传输损坏。接收窗口用于流量控制，避免压垮接收方，拥塞窗口及慢启动、拥塞避免等机制用于控制网络压力。这些机制保证传输可靠性。机密性和身份认证通常由上层 TLS 提供。</p>
+<p>UDP 无需先建立连接，保留数据报边界，协议自身没有交付、排序或重传承诺。应用可以在它之上实现自己的可靠性和拥塞控制。实时音视频等场景常选 UDP，但实际延迟和吞吐还受实现、路径和业务需求影响。</p>
+<p><strong>三次握手。</strong> 客户端发送 <code>SYN</code> 并进入 <code>SYN_SENT</code>。服务端回复 <code>SYN + ACK</code>，进入 <code>SYN_RCVD</code>。客户端回应 <code>ACK</code> 并进入 <code>ESTABLISHED</code>，服务端收到后也进入 <code>ESTABLISHED</code>。双方借此确认初始序列号和双向通信路径。</p>
+<h2 id="HTTP-与-HTTPS，证书怎么验证"><a href="#HTTP-与-HTTPS，证书怎么验证" class="headerlink" title="HTTP 与 HTTPS，证书怎么验证"></a>HTTP 与 HTTPS，证书怎么验证</h2><p>HTTP 默认端口 80，HTTPS 默认端口 443。HTTPS 用 TLS 提供机密性、完整性与对端认证。建立 TLS 会话和加解密有额外开销，可以通过连接复用、会话恢复等减少重复握手。</p>
+<p>服务端证书将域名或服务身份绑定到公钥。客户端收到证书链后检查签名链是否连到受信任的根、主机名、有效期和用途等，并验证服务端能证明持有对应私钥。证书可以由受信任 CA 免费或付费签发。</p>
+<p><strong>什么时候用对称、什么时候用非对称密码？</strong> 以现代 TLS 为例，握手阶段用非对称签名完成常见的证书认证，通过例如 ECDHE 的密钥协商派生会话密钥。记录数据通常用 AES-GCM 或 ChaCha20-Poly1305 等 AEAD 对称算法保护。旧版 TLS 支持用服务端 RSA 公钥传输预主密钥，TLS 1.3 已去除这条路径。<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc8446">TLS 1.3 标准</a></p>
+<h2 id="GET、POST-和请求内容类型"><a href="#GET、POST-和请求内容类型" class="headerlink" title="GET、POST 和请求内容类型"></a>GET、POST 和请求内容类型</h2><p>GET 表示读取，一般具备安全和幂等语义，查询条件常写在 URL。POST 表示让目标资源处理提交的数据，常把数据放在请求体，默认不具备幂等语义。应用可以为创建订单等 POST 接口设计幂等键。GET 请求体没有通用语义，URL 和请求体的实际大小都可能受客户端、代理和服务端限制。对敏感数据应使用 HTTPS 并管理日志、缓存和参数位置。GET 响应通常可缓存，POST 响应在满足明确缓存条件时也能缓存。</p>
+<p>除了 <code>application/json</code>，常见 <code>Content-Type</code> 有 <code>application/x-www-form-urlencoded</code>（键值表单）、<code>multipart/form-data</code>（多段表单或文件）、<code>text/plain</code>（纯文本），以及 <code>application/xml</code> 或 <code>text/xml</code>（XML）。<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc9110">HTTP 语义标准</a></p>
+<h2 id="Session、Cookie、Redis-Token-和-JWT"><a href="#Session、Cookie、Redis-Token-和-JWT" class="headerlink" title="Session、Cookie、Redis Token 和 JWT"></a>Session、Cookie、Redis Token 和 JWT</h2><table>
+<thead>
+<tr>
+<th>方式</th>
+<th>会话状态和请求凭证</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Session + Cookie</td>
+<td>登录成功后服务端创建 Session，浏览器 Cookie 携带 SessionID。多实例可用 Redis 共享 Session</td>
+</tr>
+<tr>
+<td>Redis Token</td>
+<td>服务端生成随机不透明令牌，用令牌作键保存身份或会话信息并设 TTL，便于续期与主动撤销</td>
+</tr>
+<tr>
+<td>签名 JWT</td>
+<td>常见紧凑格式有 Header、Payload 和 Signature。Header 声明算法和类型，Payload 包含用户标识及过期时间等声明，Signature 用来校验完整性与来源</td>
+</tr>
+</tbody></table>
+<p>Cookie 是浏览器保存并发送凭证的载体，可以保存 SessionID，也可以保存 JWT。JavaScript 也可以从内存或浏览器存储取令牌并通过 <code>Authorization: Bearer …</code> 传递。Cookie 要考虑 <code>HttpOnly</code>、<code>Secure</code>、<code>SameSite</code> 和 CSRF，脚本可读的浏览器存储需要考虑 XSS。签名 JWT 的载荷通常可直接解码，服务端验签时还要检查约定的算法、过期时间、签发者和受众。</p>
+<p><strong>Access Token 过期怎么续期？</strong> 常用短期 Access Token 加长期 Refresh Token。客户端凭有效刷新令牌申请新访问令牌。刷新流程可使用轮换、失效记录或服务端会话，以支持撤销。Redis 会话可选择滑动 TTL。对于已经签发并包含 <code>exp</code> 的 JWT，延长 Redis TTL 不会改写 JWT 自带的过期时间，需要重新签发。<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc7519">JWT 标准</a></p>
+<h2 id="登录接口如何防暴力破解"><a href="#登录接口如何防暴力破解" class="headerlink" title="登录接口如何防暴力破解"></a>登录接口如何防暴力破解</h2><p>面试里可按账号、IP 等维度限流。失败次数达到阈值后增加等待时间或临时限制，结合风控决定是否增加验证码或多因素认证。未知账号和密码错误使用统一提示，减少身份枚举。记录异常尝试并告警，设计限流和锁定时也要避免正常用户轻易被误封。</p>
+<h2 id="为什么用-SSE，什么时候用-WebSocket"><a href="#为什么用-SSE，什么时候用-WebSocket" class="headerlink" title="为什么用 SSE，什么时候用 WebSocket"></a>为什么用 SSE，什么时候用 WebSocket</h2><p>面试举的是服务端逐段返回生成内容的场景，核心需求是客户端触发一次操作，服务端单向持续输出。我会从四点解释选择：</p>
+<ol>
+<li>可以先展示收到的第一段数据，减少用户等待完整响应的时间。</li>
+<li>浏览器原生 <code>EventSource</code> 支持自动重连。服务端发送事件 ID，并按 <code>Last-Event-ID</code> 实现补发后，才能恢复到合适的位置。</li>
+<li>基于标准 HTTP，响应类型为 <code>text/event-stream</code>，能复用已有代理和认证设施，需要检查代理缓冲、连接超时和心跳。</li>
+<li>单向事件流适合这类请求。需要客户端和服务端持续双向独立发送数据时，可以评估 WebSocket。</li>
+</ol>
+<p>普通 HTTP 也可以做流式响应，SSE 提供约定好的事件格式和浏览器接口。原生 <code>EventSource</code> 使用 GET，若提交参数必须用 POST，可以先 POST 创建任务，再通过 GET 订阅，或用 <code>fetch</code> 读取流并自行处理重连和解析。<a target="_blank" rel="noopener" href="https://html.spec.whatwg.org/multipage/server-sent-events.html">HTML 标准中的 Server-Sent Events</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

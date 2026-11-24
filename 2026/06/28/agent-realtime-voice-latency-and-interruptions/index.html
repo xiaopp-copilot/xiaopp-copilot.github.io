@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>搭语音 Agent 时，先量延迟和打断恢复</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-28">2026-06-28</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-28">2026-06-28</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>做语音问答原型时，可以先用语音活动检测、语音识别、语言模型和语音合成组成级联链路。我会记录用户停止说话、识别结果可用、模型开始输出、音频开始播放这几个时点。这样能看到延迟来自等停顿、等模型，还是音频合成和播放队列。</p>
 <h2 id="流式处理与打断"><a href="#流式处理与打断" class="headerlink" title="流式处理与打断"></a>流式处理与打断</h2><p>识别可以逐步返回文本，稳定片段进入下一阶段，模型生成的完整短句可交给 TTS。用户在播放时开口，新轮次应能让旧轮次停止生成，清掉仍在排队的旧音频，并在会话状态里保留用户实际听到的部分。后端工具若已经启动，则根据工具是否可取消来处理，并按轮次隔离晚到的结果。</p>

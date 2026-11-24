@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>让报销附件地点补全识别海外城市</h1>
-    <div class="entry-meta">
-      <time datetime="2026-07-01">2026-07-01</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-07-01">2026-07-01</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>这次我梳理了酒店水单、会议邀请、会议通知三类附件的地点补全。它们都会把识别出的地址交给地理编码服务，转换成区域信息。测试时发现，传入海外地名后，腾讯位置服务有时会返回一个可解析的国内地址。服务调用正常结束，结果却指错了地点。</p>
 <h2 id="排查结果和处理方向"><a href="#排查结果和处理方向" class="headerlink" title="排查结果和处理方向"></a>排查结果和处理方向</h2><p>我把问题落在两个判断上。请求前要识别输入是否可能来自海外，并保留能帮助消歧的国家信息。响应后还要检查返回的国家或地区是否与输入一致。国家、城市和区域编码需要前后一致，单看有没有返回编码，无法判断补全是否正确。</p>

@@ -1,0 +1,77 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 RabbitMQ 路由、Kafka 吞吐、消费回执、Redis 削峰与事务消息的面试追问。">
+  <title>RabbitMQ 与 Kafka：消息可靠性、削峰与 Outbox · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/rabbitmq-kafka/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>RabbitMQ 与 Kafka：消息可靠性、削峰与 Outbox</h1>
+    
+  </header>
+  <div class="prose"><h2 id="RabbitMQ-怎么路由和保证可靠投递"><a href="#RabbitMQ-怎么路由和保证可靠投递" class="headerlink" title="RabbitMQ 怎么路由和保证可靠投递"></a>RabbitMQ 怎么路由和保证可靠投递</h2><p><strong>新大陆面试原题。</strong> RabbitMQ 使用 Erlang&#x2F;OTP 实现。以 AMQP 0-9-1 为例，生产者把消息交给 Exchange，由绑定规则把消息路由到队列。Direct 精确匹配 Routing Key，Fanout 广播到绑定队列，Topic 按绑定模式匹配。</p>
+<ul>
+<li><strong>生产端</strong>开启 Publisher Confirms，观察 Broker 是否接受投递。对于路由不到队列的消息，可配置 <code>mandatory</code> 和返回处理。发送失败或未收到确认时，用重试和待发记录兜底。</li>
+<li><strong>Broker</strong> 按需求使用持久化交换机和队列、持久消息及适当的队列类型。挖角面试追问过消息丢失，可进而解释刷盘时点、主从或多数副本确认，以及如何用 quorum queue 承受节点故障。确认落盘或副本的具体语义取决于消息代理和队列配置。</li>
+<li><strong>消费端</strong>在本地业务事务提交后手动 ACK。处理失败按错误类型重试或拒绝，避免无休止地重新入队。可配置死信交换机 DLX，让死信路由到队列中排查和补偿。</li>
+</ul>
+<p>发送重试或消费端确认丢失都可能带来重复投递。业务要按消息 ID 或唯一业务键做幂等。<a target="_blank" rel="noopener" href="https://www.rabbitmq.com/docs/confirms">RabbitMQ 发布确认与消费确认</a></p>
+<h2 id="Kafka-的吞吐量来自哪里"><a href="#Kafka-的吞吐量来自哪里" class="headerlink" title="Kafka 的吞吐量来自哪里"></a>Kafka 的吞吐量来自哪里</h2><p>Kafka 适合日志上报、流量削峰和异步数据管线。分区日志以追加写为主，有利于顺序 I&#x2F;O 和页缓存利用，多个分区也能并行处理。生产者按批发送与压缩，减少网络往返和每条记录开销。在合适的传输路径上，Kafka 可利用零拷贝减少数据穿越用户态的复制。吞吐还取决于副本和确认策略、分区数、序列化、压缩、消息大小和批大小。</p>
+<h2 id="Redis-预扣库存加-MQ-怎样抗高并发"><a href="#Redis-预扣库存加-MQ-怎样抗高并发" class="headerlink" title="Redis 预扣库存加 MQ 怎样抗高并发"></a>Redis 预扣库存加 MQ 怎样抗高并发</h2><p>请求先到 Redis，用 Lua 或合适的原子操作检查并预扣库存，成功后将订单请求写入 MQ，接口返回排队或受理状态。消费者按数据库承载能力处理消息，在 MySQL 中完成订单和最终库存变更。要区分 Redis 预扣成功、消息可靠投递、消费者落库成功这三个时点。预扣后投递失败需要补偿或可恢复记录，落库需要防止重复下单，接受结果可由用户通过订单号查询。MQ 的作用是把进入速度和落库速度解耦。</p>
+<h2 id="消费者处理成功后，怎么通知生产者"><a href="#消费者处理成功后，怎么通知生产者" class="headerlink" title="消费者处理成功后，怎么通知生产者"></a>消费者处理成功后，怎么通知生产者</h2><p><strong>亿联网络一面原题。</strong> Broker 的消费 ACK 给 Broker 管理消息生命周期使用。要告诉生产者业务是否完成，可单独设计结果事件或请求—应答通道。</p>
+<ol>
+<li>原消息携带业务 ID 和 <code>correlationId</code>，需要指定应答通道时还可带 <code>replyTo</code>。</li>
+<li>消费者提交业务事务，发送带同一关联 ID 的成功或失败事件，必要时用 Outbox 保存回执。</li>
+<li>生产者消费结果并以关联 ID 幂等更新任务状态。也可以由调用方查询状态，针对结果未到和重复回执分别处理超时与重试。</li>
+</ol>
+<h2 id="数据库事务回滚，怎么避免消息已经发出"><a href="#数据库事务回滚，怎么避免消息已经发出" class="headerlink" title="数据库事务回滚，怎么避免消息已经发出"></a>数据库事务回滚，怎么避免消息已经发出</h2><p><strong>苏州科达面试追问。</strong> 对允许少量丢失或能由其他机制恢复的场景，可用 Spring <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code> 在成功提交后发送。这个方案避免回滚事务发送消息，仍有提交后到发出前的进程崩溃或网络故障窗口。监听器注册过程见 <a href="/backend/spring-nacos/">Spring 事件监听</a>。</p>
+<p>有可靠投递要求时，我会讨论 <strong>本地消息表（Transactional Outbox）</strong>：</p>
+<ol>
+<li>更新业务状态的同一数据库事务内插入 <code>outbox_message</code>，包括唯一消息 ID、事件内容和 <code>pending</code> 状态。回滚时业务状态和消息记录一起撤销。</li>
+<li>独立的任务扫描已提交的待发记录，或由 CDC 订阅变更后投递。得到消息代理确认后，把记录改为 <code>sent</code>。</li>
+<li>投递失败则保留重试条件，适合加退避、失败告警和人工补偿。多任务并发扫描时，要有领取机制或能容忍重复发送。</li>
+<li>若 Broker 已确认而进程在标记 <code>sent</code> 前退出，重试可能再次发送。消费者以同一消息 ID 或业务键去重。消息的最终送达仍依赖任务、Broker 和补偿链路恢复。</li>
+</ol>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

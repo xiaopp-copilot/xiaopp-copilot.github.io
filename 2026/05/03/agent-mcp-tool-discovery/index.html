@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>MCP 工具越来越多时，怎样做按需发现</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-03">2026-05-03</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-03">2026-05-03</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>多个 MCP 服务接入后，工具列表容易出现相近的名字。例如知识库、项目文档和工单都能搜索，模型得先知道该去哪一处查。我的做法是给应用一个轻量目录，包含服务来源、工具用途、适用对象以及读写类型，再按任务选出少量候选。</p>
 <h2 id="发现和执行各自做什么"><a href="#发现和执行各自做什么" class="headerlink" title="发现和执行各自做什么"></a>发现和执行各自做什么</h2><p>发现阶段先根据任务和可访问资源过滤，再向模型提供候选工具的名称、用途和来源。确认使用某项能力后，才加载完整的参数 Schema 和必要示例。执行前仍要检查当前用户的资源权限，工具的 <code>service + name</code> 身份也应可追踪，防止名字相同的能力被混用。目录里的来源描述属于检索信息，授权由应用和服务端核验。</p>

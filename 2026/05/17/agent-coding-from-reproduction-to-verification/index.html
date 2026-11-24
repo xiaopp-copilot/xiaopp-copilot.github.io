@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>Coding Agent 修 Bug 时，怎样从复现走到验证</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-17">2026-05-17</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-17">2026-05-17</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>给 Coding Agent 一个「含空列的 CSV 导入失败」的问题，我会先提供触发样本、入口和预期行为。Agent 应从项目的现有读入逻辑出发，跑一个能区分旧行为和期望结果的样本，再定位最小修改范围。</p>
 <h2 id="每一步留下可复核的证据"><a href="#每一步留下可复核的证据" class="headerlink" title="每一步留下可复核的证据"></a>每一步留下可复核的证据</h2><ol>

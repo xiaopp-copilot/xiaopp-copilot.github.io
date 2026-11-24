@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>联调时找回稽核查询缺失的制度边界</h1>
-    <div class="entry-meta">
-      <time datetime="2026-07-21">2026-07-21</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-07-21">2026-07-21</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>联调稽核事项改造时，我发现查询可能返回多条稽核单元记录，其中混入了其他制度下的历史配置。只用事项关联去查，拿到的数据范围比当前业务所需的更宽。联调确认需要按当前 <code>policyId</code> 补充过滤，并与稽核单元数据里承载该含义的 <code>answerCode</code> 字段对应。</p>
 <h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>多条结果首先提示我核对查询条件到底描述了什么。按事项查到的记录可以横跨多个制度，当前业务要定位的是某项制度下的记录。由于数据库字段名和业务参数名也不同，这个映射应在查询层清晰表达。我会用「同一个事项、两套制度」来验证该条件，单制度样本很难暴露这个问题。</p>

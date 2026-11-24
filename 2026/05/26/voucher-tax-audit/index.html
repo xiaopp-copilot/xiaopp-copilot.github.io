@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>财政票据为什么会触发税额缺失提示</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-26">2026-05-26</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-26">2026-05-26</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>个人票夹里，一类非税收入财政票据触发了「未能获取到凭证的税额合计」提示。这类票据本来就没有税额，提示却把它当成了数据缺失。我的排查顺序是先核对规则对票种和业务场景的适用范围，再检查输入凭证，最后定位后端执行的规则方法。</p>
 <h2 id="从配置追到执行"><a href="#从配置追到执行" class="headerlink" title="从配置追到执行"></a>从配置追到执行</h2><p>我梳理了 Java 后端的稽核链路。系统先根据凭证找到关联流程，命中时复用缓存中的流程定义，未命中时解析 JSON 配置。流程表达式决定节点顺序，票种和场景控制节点能否执行，节点内部再按规则表达式分派。Java 侧通过注解扫描建立规则名与方法的映射，解析参数后反射调用，流程上下文串起输入与校验结果。</p>

@@ -1,0 +1,69 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="复盘微信支付链路，以及支付成功通知与延时关单同时处理时的订单一致性。">
+  <title>微信支付：预支付、回调幂等和超时关单 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/wechat-pay/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>微信支付：预支付、回调幂等和超时关单</h1>
+    
+  </header>
+  <div class="prose"><h2 id="一次微信支付是怎么完成的"><a href="#一次微信支付是怎么完成的" class="headerlink" title="一次微信支付是怎么完成的"></a>一次微信支付是怎么完成的</h2><p><strong>浩鲸科技一面原题。</strong> 以 JSAPI 为例：</p>
+<ol>
+<li>商户后端落本地订单，用商户订单号和金额等信息发起微信预支付请求，得到 <code>prepay_id</code>。</li>
+<li>后端用 <code>prepay_id</code> 构造并签名客户端调起参数，前端拿到签名后的参数，调起微信收银台。</li>
+<li>支付成功后，微信向商户通知接口异步回调。后端先验签，再解密通知内容并校验商户号、应用、商户订单号、金额和支付状态。也可调用查单接口主动确认微信侧结果。</li>
+<li>用本地事务和条件更新推进订单状态、写支付账单。记录微信支付单号等可追溯标识，唯一约束和状态条件用于避免重复入账。成功的重复回调按幂等结果应答。</li>
+</ol>
+<p>前端支付结果主要用于界面反馈，订单最终状态以验签通知或主动查单为依据。<a target="_blank" rel="noopener" href="https://pay.wechatpay.cn/doc/v3/merchant/4012791870">微信支付 JSAPI 开发指引</a></p>
+<h2 id="支付成功和延时关单同时到，听谁的"><a href="#支付成功和延时关单同时到，听谁的" class="headerlink" title="支付成功和延时关单同时到，听谁的"></a>支付成功和延时关单同时到，听谁的</h2><p><strong>九方智投一面原题。</strong> 我从订单状态机、条件更新和本地事务讲起。落地时还要考虑支付平台通知与内部延时消息可以乱序抵达。</p>
+<ul>
+<li><strong>收到支付成功。</strong> 先完成验签和比对。允许从待支付状态转换为已支付，在同一事务写支付记录和后续事件。更新 0 行时重新读状态，区分已成功处理、处在关单协调中，还是需要补偿的异常状态。</li>
+<li><strong>收到延时关单。</strong> 只处理仍待支付的订单。先确认渠道状态，对未支付订单按渠道规则调用关闭。渠道已支付则走支付确认，关闭成功或查单确认已关闭后才把本地状态推进到已关闭。</li>
+<li><strong>渠道请求超时或状态冲突。</strong> 保留可重试状态，重新查单，并按业务规则协调。若本地已经关闭却发现渠道已支付，要有对账和退款或人工补偿流程，避免静默漏记。</li>
+</ul>
+<p>并发时用 <code>WHERE status = &#39;PENDING&#39;</code> 等条件保护合法状态转换，用事务保证订单和账单原子更新。支付回调、主动查单、关单任务都可以重复进来，最终结果取决于渠道的确认状态和本地允许的状态迁移。<a target="_blank" rel="noopener" href="https://pay.wechatpay.cn/doc/v3/merchant/4012791870">微信支付 JSAPI 开发指引</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

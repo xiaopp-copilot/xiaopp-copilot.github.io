@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>把失败轨迹整理成可以验证和回滚的 Skill 改动</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-21">2026-06-21</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-21">2026-06-21</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>如果表格整理 Agent 反复漏掉单位，我会先挑几条失败轨迹和一条成功轨迹，找共同的前置条件。问题可能出在列名解析，也可能出在输出时漏了单位。能归纳出的经验应写成一条具体规则，例如「汇总前检查每列的单位，单位混用时先标出异常行」。</p>
 <h2 id="经验落到合适的位置"><a href="#经验落到合适的位置" class="headerlink" title="经验落到合适的位置"></a>经验落到合适的位置</h2><p>稳定事实存知识库，带判断条件的步骤写进 Skill，重复且可确定验证的计算做成工具。让我更愿意复用一项经验的，是它有适用范围、来源和验收条件。过去的轨迹里可能有偶然成功的操作，也可能含敏感数据。只提炼能解释、可重测的部分，保留原样本的受控引用。</p>

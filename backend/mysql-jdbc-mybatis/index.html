@@ -1,0 +1,105 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 SQL 执行链路、JDBC、MyBatis、InnoDB 索引、慢查询实战与事务锁。">
+  <title>MySQL 与持久层：索引、SQL 调优、事务和锁 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/mysql-jdbc-mybatis/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>MySQL 与持久层：索引、SQL 调优、事务和锁</h1>
+    
+  </header>
+  <div class="prose"><h2 id="一条-SQL-的执行链路是什么"><a href="#一条-SQL-的执行链路是什么" class="headerlink" title="一条 SQL 的执行链路是什么"></a>一条 SQL 的执行链路是什么</h2><p><strong>携程 AI 面原题。</strong> 以常见的 MySQL <code>SELECT</code> 为例：连接器建立会话并校验身份，服务端解析 SQL、解析对象和权限，优化器评估索引、连接顺序和访问路径，执行器调用存储引擎读取数据并处理过滤、聚合或排序，最后返回结果。InnoDB 在这个过程中通过缓冲池、索引、事务快照和锁提供实际的数据访问。MySQL 8.0 已移除旧版查询缓存，应用和存储引擎仍可各自有缓存。</p>
+<p><strong>JDBC 的完整步骤。</strong> 加载或自动发现驱动，通过 <code>DataSource</code> 或 <code>DriverManager</code> 获取连接，创建 <code>Statement</code> 或 <code>PreparedStatement</code>，绑定参数后执行 SQL，遍历 <code>ResultSet</code>，最后释放结果集、语句和连接。使用连接池时，关闭连接对象通常意味着归还。多语句事务还要处理提交或回滚。</p>
+<p><strong>MyBatis 中 # 和 $ 有什么区别？</strong> <code>#{value}</code> 会生成 <code>PreparedStatement</code> 的占位符并绑定值。<code>${value}</code> 会把文本拼入 SQL，用于表名、列名等无法作为值参数绑定的结构时，应从代码控制的固定映射或允许列表选取，避免让不可信输入直接进入语句。值参数优先使用绑定。</p>
+<h2 id="索引为什么适合用-B-树"><a href="#索引为什么适合用-B-树" class="headerlink" title="索引为什么适合用 B+ 树"></a>索引为什么适合用 B+ 树</h2><p>索引是额外维护的访问结构，用存储和写入成本换取查询效率。InnoDB 的 B+ 树内部页主要保留导航信息，单页扇出高、树高度低，通常能减少磁盘页访问。叶页按键有序并相连，适用于范围扫描。哈希索引擅长等值定位，无法直接提供同样的有序扫描。对比可能在内部节点保存记录的 B 树，也要从页大小和扇出解释选择。</p>
+<ul>
+<li><strong>聚簇索引</strong>的叶子包含整行记录。<strong>二级索引</strong>的叶子含索引列和主键，取未覆盖的列通常需要用主键再查一次，即回表。</li>
+<li><strong>覆盖索引</strong>满足查询所需的列和条件时，可直接从索引获取结果。查看 <code>EXPLAIN</code> 的 <code>Using index</code>。<code>Using index condition</code> 说的是索引条件下推，这两者分别回答能否覆盖和在哪一层过滤。</li>
+<li><strong>最左前缀</strong>以联合索引 <code>(a, b, c)</code> 为例，<code>a = 1 AND b = 2</code> 可通过前缀定位。缺少 <code>a</code> 或跳过 <code>b</code> 会限制常规范围定位，特定版本和条件下还有 skip scan 等访问路径。某列用范围条件后，右侧列通常无法继续收窄连续键区间，仍可能通过索引条件下推、覆盖等发挥作用。</li>
+<li><strong>已经满足最左前缀还可能扫描表吗？</strong> 左侧通配符 <code>LIKE &#39;%abc&#39;</code>、对索引列施加函数或算术、字符串列和数值发生隐式转换，都可能妨碍索引定位。命中行比例过高时，优化器也可能直接选择扫描表。<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/index-condition-pushdown-optimization.html">MySQL 索引条件下推</a></li>
+</ul>
+<h2 id="项目里的索引怎么加，为什么有些字段不加"><a href="#项目里的索引怎么加，为什么有些字段不加" class="headerlink" title="项目里的索引怎么加，为什么有些字段不加"></a>项目里的索引怎么加，为什么有些字段不加</h2><p>先列高频查询的 <code>WHERE</code>、<code>JOIN</code>、<code>ORDER BY</code>、<code>GROUP BY</code> 条件及返回列，再用真实数据和执行计划检查联合索引顺序、覆盖范围和写入负担。手机号、订单号通常区分度较高。低区分度字段单独建索引的收益可能有限，但和其他列组成联合索引时可以有用。小表、频繁更新字段、很长的文本都要评估是否值得；长文本还可根据检索需求考虑前缀索引或全文索引。每增加一个索引，写入都可能增加维护成本和磁盘占用。回答面试追问时，我会以实际查询、数据分布和前后执行计划为依据。</p>
+<h2 id="慢-SQL-和深分页怎么排查"><a href="#慢-SQL-和深分页怎么排查" class="headerlink" title="慢 SQL 和深分页怎么排查"></a>慢 SQL 和深分页怎么排查</h2><p><strong>杭州教育面试原题。</strong> 先从慢查询日志确定具体 SQL、耗时和扫描量，再用 <code>EXPLAIN</code> 看 <code>type</code>、<code>key</code>、<code>rows</code>、<code>Extra</code> 和连接顺序。适合的环境下可用 <code>EXPLAIN ANALYZE</code> 对比实际执行行数与估算。常用调整如下：</p>
+<ol>
+<li>优先缩小过滤范围，再做排序、分组和连接。只取所需列，评估覆盖索引，尽量别在索引列上包函数。合适时用右侧通配符 <code>LIKE &#39;abc%&#39;</code>，能枚举离散值的场景才考虑 <code>IN</code>。</li>
+<li>大偏移量分页用已读末尾作锚点。例如按主键排序时采用 <code>WHERE id &gt; last_id ORDER BY id LIMIT page_size</code>。按非唯一字段排序时，可用排序字段与主键组成稳定游标。</li>
+<li>允许保留重复结果时用 <code>UNION ALL</code>，省去 <code>UNION</code> 的去重开销。先让优化器选连接顺序，对照执行计划再考虑 <code>STRAIGHT_JOIN</code>。小结果集的 <code>IN</code> 和相关子查询的 <code>EXISTS</code> 都可以先按数据分布压测，新版优化器可能将两者都转成半连接。</li>
+<li>控制大事务和复杂连接，避免在循环中逐条提交，按可控批次增删改。整表清空可评估 <code>TRUNCATE TABLE</code>，它是 DDL，会隐式提交，和支持按条件删除、可在 InnoDB 事务中回滚的 <code>DELETE</code> 有不同的锁和日志特性。</li>
+<li>优化单条查询后若容量仍不足，再根据瓶颈评估读写分离、分表或缓存，确认一致性和运维成本。</li>
+</ol>
+<p><strong>规模追问。</strong> 紫讯一面问项目有没有大数据量场景，携程 AI 面问百万级用户的数值排名。排名先澄清是取 Top N、查某个用户名次还是排名全量输出，并明确并列规则和更新频率。SQL 可以用排序、窗口函数或适合访问模式的索引，频繁更新的在线榜单可讨论 Redis ZSet。项目数据量、QPS 和耗时应使用有测量记录的数字。</p>
+<h2 id="InnoDB-的事务、隔离和锁"><a href="#InnoDB-的事务、隔离和锁" class="headerlink" title="InnoDB 的事务、隔离和锁"></a>InnoDB 的事务、隔离和锁</h2><table>
+<thead>
+<tr>
+<th>ACID</th>
+<th>InnoDB 中要讲清的机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>原子性</td>
+<td>操作要么一起提交要么回滚，Undo Log 支持撤销修改</td>
+</tr>
+<tr>
+<td>一致性</td>
+<td>事务边界前后满足业务不变量，由约束、应用逻辑和数据库机制共同保证</td>
+</tr>
+<tr>
+<td>隔离性</td>
+<td>使用锁和 MVCC 控制并发事务可看见的数据以及可以执行的写入</td>
+</tr>
+<tr>
+<td>持久性</td>
+<td>Redo Log 支持崩溃恢复，实际承诺取决于刷盘配置和存储条件</td>
+</tr>
+</tbody></table>
+<p>读未提交允许读到其他事务未提交的写入。读已提交为每条一致性读建立视图，解决脏读，同事务两次读取结果可以不同。可重复读是 InnoDB 常见的默认隔离级别，一致性读复用快照，锁定读对索引范围可使用临键锁限制插入。串行化提供更强隔离，并发执行仍可存在，但结果要符合可串行化要求。</p>
+<ul>
+<li><strong>按粒度</strong>可讲全局读锁与备份、表级锁与元数据锁（MDL）、InnoDB 表级意向锁和记录级锁。</li>
+<li><strong>按模式</strong>可讲共享锁（S）和排他锁（X）。InnoDB 锁定的是索引记录。Record Lock 锁记录，Gap Lock 锁记录之间的间隙，Next-Key Lock 组合记录锁与其前方间隙。</li>
+<li>在显式事务中，<code>SELECT … FOR UPDATE</code> 取得的锁通常持续到 <code>COMMIT</code> 或 <code>ROLLBACK</code>，多条 SQL 可以共享这一保护边界。精确锁定范围会受索引、查询方式和隔离级别影响。<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html">MySQL 官方 InnoDB 加锁说明</a></li>
+</ul>
+<h2 id="InnoDB-和-MyISAM-有什么区别"><a href="#InnoDB-和-MyISAM-有什么区别" class="headerlink" title="InnoDB 和 MyISAM 有什么区别"></a>InnoDB 和 MyISAM 有什么区别</h2><p><strong>亿联网络一面。</strong> InnoDB 支持事务、MVCC、外键及行级锁，是现代 MySQL 常用默认引擎。MyISAM 以表级锁为主，数据和索引分别存放，缺少事务、外键与同等级的崩溃恢复能力。涉及并发更新、资金或订单一致性的业务，解释选型时应从事务和恢复语义出发。</p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

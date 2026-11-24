@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>给字段映射删除加上制度引用校验</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-28">2026-05-28</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-28">2026-05-28</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>经济事项模型描述凭证可以使用哪些字段，制度模型则引用其中的管控要素来配置稽核标准。字段映射一旦被删除，制度里的字段编码就可能失去对应定义。这个任务要求在保存时识别这类删除，并让用户知道要先解除哪项引用。</p>
 <h2 id="我拆出的校验流程"><a href="#我拆出的校验流程" class="headerlink" title="我拆出的校验流程"></a>我拆出的校验流程</h2><p>Java 服务收到的是一份新的字段快照，持久化采用先删旧记录、再写新记录的方式。我把校验设计在写入前，先比较新旧模型，得到业务上真正移除的字段，再筛出管控要素。接着沿着「模型所属事项 → 稽核单元 → 制度标准」查询关系数据，确认候选字段的编码是否仍被引用。校验命中时应提示字段和引用它的制度，便于用户直接处理。</p>

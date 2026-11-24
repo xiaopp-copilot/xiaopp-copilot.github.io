@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>用 AI 和 Skill 梳理项目异常码</h1>
-    <div class="entry-meta">
-      <time datetime="2026-07-17">2026-07-17</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-07-17">2026-07-17</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>我用 AI 配合 Skill 扫描项目中的异常码配置，再按统一规范整理扫描出的条目。这类工作分散在多个配置位置，把规则写成可复用的检查指引，有利于逐批检查差异。</p>
 <h2 id="我的思考"><a href="#我的思考" class="headerlink" title="我的思考"></a>我的思考</h2><p>适合交给 AI 的部分是查找、归类和重复改动。异常码承担什么含义，还要结合抛出位置和调用方的处理方式判断。后续做类似改造时，我会先确认旧码是否被前端提示、调用方分支或告警规则使用，再决定哪些能直接统一、哪些需要兼容。复核可以从一组有代表性的异常开始，逐个确认配置、返回码和处理行为能够对上。</p>

@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>用 Trace 定位 Agent 失败发生在哪一步</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-14">2026-06-14</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-14">2026-06-14</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>知识库助手回答错了，可能是资料没被索引、检索漏了依据、模型忽略了证据，或者结果校验没执行。我会用一个 Trace ID 串起任务，并把每次模型请求、检索、工具调用与结果校验记成有父子关系的 span。</p>
 <h2 id="运行记录里保留什么"><a href="#运行记录里保留什么" class="headerlink" title="运行记录里保留什么"></a>运行记录里保留什么</h2><p>模型 span 记录版本、时间和用量，检索 span 记录查询意图和候选资料 ID，工具 span 记录类型、参数校验结果、耗时和错误类别。最终 span 记录任务是否满足验收条件。含隐私的正文和参数可以保留脱敏摘要或受控引用，让调试能定位到具体路径，也便于限制原文的访问和保留期限。</p>

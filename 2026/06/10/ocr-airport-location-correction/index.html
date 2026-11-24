@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>从发票 OCR 排查到海外机票地点纠错设计</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-10">2026-06-10</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-10">2026-06-10</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>这天的笔记记录了两个识别相关问题。一是发票字段识别不稳定，排查中确认能通过 IDEA 远程调试沿 Feign 调用追到服务端。二是海外机票地点补全。OCR 可能读错相似字符、混淆城市与机场，或把多语言地名识别成另一种拼写，进而影响行程和费用数据。</p>
 <h2 id="我梳理的纠错流程"><a href="#我梳理的纠错流程" class="headerlink" title="我梳理的纠错流程"></a>我梳理的纠错流程</h2><p>进入地点补全时先保留 OCR 原文，核验城市、机场名称或 IATA、ICAO 代码，并检查机场与城市的归属。遇到无匹配或明显冲突时，再结合出发地、目的地和航线信息，让模型给出候选与置信度。项目中已有调用 Moonshot 整理凭证备注的实现，可以作为接入方式的参考。</p>

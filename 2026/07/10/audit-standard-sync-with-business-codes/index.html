@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>用业务唯一码改造稽核标准的查询与同步</h1>
-    <div class="entry-meta">
-      <time datetime="2026-07-10">2026-07-10</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-07-10">2026-07-10</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>在稽核点编码改造之后，我继续把经济事项、费用行为和稽核点唯一码接入查询与写入流程。任务还包括支持经济事项下拉框的关键字搜索，以及按问题编码反查关联事项。</p>
 <h2 id="查询与写入的改动"><a href="#查询与写入的改动" class="headerlink" title="查询与写入的改动"></a>查询与写入的改动</h2><p>查询关联事项时，先根据稽核点类型判断关联路径。经济事项稽核点可以直接找到事项，费用行为稽核点则需要经关系记录回到事项。开发关键字接口时，我也顺着 Spring MVC 的 <code>HandlerMethodArgumentResolver</code> 和 <code>ThreadLocal</code> 理清了登录上下文的注入过程。联调中，空关键字触发了 <code>Collectors.toMap</code> 构建时的空值异常，我在组装前补上了过滤。</p>

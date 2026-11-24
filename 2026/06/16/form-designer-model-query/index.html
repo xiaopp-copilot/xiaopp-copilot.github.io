@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>为表单设计器设计经济事项模型查询接口</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-16">2026-06-16</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-16">2026-06-16</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>表单设计器需要根据报销单编码确定可以配置哪些经济事项和扩展字段。我设计了一个 Java SDK 查询接口，经 Feign 调用后一次返回表单所需的信息，调用方可以直接拿到事项、费用行为和扩展字段树。</p>
 <h2 id="接口产出"><a href="#接口产出" class="headerlink" title="接口产出"></a>接口产出</h2><p>查询先根据报销单编码找到可用的经济事项，再通过关系数据取得费用行为。响应保留事项和费用行为的业务编码、唯一码、名称，并将模型树里的叶子标记转换为调用方关心的「是否分组」。扩展字段只聚合基础信息、报销单信息两棵子树。改造后用原有响应样例核对了输出形状。</p>

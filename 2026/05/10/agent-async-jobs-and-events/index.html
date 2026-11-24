@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>把耗时工具改造成可取消的异步任务</h1>
-    <div class="entry-meta">
-      <time datetime="2026-05-10">2026-05-10</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-05-10">2026-05-10</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>一份大型报表要生成几十秒，用户中途可能问进度，也可能更改筛选条件。我会让工具启动任务后马上返回 <code>job_id</code> 和当前状态，后台工作进程继续生成。任务完成、失败或取消时再发事件，运行时据此恢复会话或更新界面。</p>
 <h2 id="把状态转换写进运行时"><a href="#把状态转换写进运行时" class="headerlink" title="把状态转换写进运行时"></a>把状态转换写进运行时</h2><p>每个任务保存所属会话、输入版本、状态和结果引用。完成事件带任务 ID 与唯一事件 ID，消费者据此去重。收到取消请求时先记录取消意图，由工作进程确认能否终止。若用户已改了条件，旧任务晚到的结果仍可供查看，但要按版本隔离，避免覆盖当前输出。</p>

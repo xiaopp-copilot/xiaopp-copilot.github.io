@@ -1,0 +1,137 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从商家数据结构和底层编码，讲到缓存风险、两级缓存同步、Redis Cluster 和 Redisson。">
+  <title>Redis 与缓存：数据结构、持久化、分片和分布式锁 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/redis-cache/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Redis 与缓存：数据结构、持久化、分片和分布式锁</h1>
+    
+  </header>
+  <div class="prose"><h2 id="商家数据该用什么结构"><a href="#商家数据该用什么结构" class="headerlink" title="商家数据该用什么结构"></a>商家数据该用什么结构</h2><p><strong>滴滴一面原题。</strong> 先把访问方式拆开。整块读取商家详情可用 String 缓存序列化对象，需要按字段读取或更新时可用 Hash。附近门店可评估 GEO，热度排名用 ZSet，标签去重或交集用 Set。判断依据是怎么读、怎么写、数据量和过期粒度。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>场景</th>
+<th>底层编码要点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>String</td>
+<td>对象缓存、Token、计数器、基础锁</td>
+<td>可用 <code>int</code> 保存能表示的整数。SDS 短字符串常用 <code>embstr</code>，常见阈值 44 字节，字符串和对象一起分配。长字符串用 <code>raw</code> 分开分配</td>
+</tr>
+<tr>
+<td>Hash</td>
+<td>商家、用户、角色等对象的字段读写</td>
+<td>小对象可用 <code>ziplist</code>，Redis 7.0+ 对应 <code>listpack</code>。扩大后转字典，使用拉链法处理碰撞并支持渐进式 rehash</td>
+</tr>
+<tr>
+<td>List</td>
+<td>最新动态、简单先进先出队列</td>
+<td>早期用 <code>ziplist</code> 或双向链表。Redis 3.2 起使用以双向链表串联紧凑节点的 <code>quicklist</code>，Redis 7 起以 <code>listpack</code> 替代其旧压缩列表节点</td>
+</tr>
+<tr>
+<td>Set</td>
+<td>去重、共同好友、标签交并集</td>
+<td>小整数集合可用 <code>intset</code>，较大集合走哈希表。Redis 7.2+ 还支持适合小集合的 <code>listpack</code></td>
+</tr>
+<tr>
+<td>ZSet</td>
+<td>排行榜、按时间戳查找延时任务</td>
+<td>小集合使用紧凑编码。大集合用跳表与字典配合，定位和插入通常为 O(log N)，范围结果遍历再加 O(M)，按成员查分数平均 O(1)</td>
+</tr>
+</tbody></table>
+<p>Redis 7 常见的紧凑编码门槛是 Hash 512 项、字段名和值 64 字节，ZSet 128 项、成员 64 字节，<code>intset</code> 常见 512 项。编码由版本、实际数据和配置决定，可用 <code>OBJECT ENCODING</code> 验证。Bitmap 在 String 上做位运算，HyperLogLog 用稀疏或稠密表示估计基数，GEO 把经纬度编码为 ZSet 中 52 位整数分值，Stream 用基数树与 listpack 保留消息序列。<a target="_blank" rel="noopener" href="https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/memory-optimization/">Redis 内存编码说明</a></p>
+<p><strong>百万级用户排名怎么做？</strong> 按榜单周期维护 ZSet，成员用用户 ID，分数用实际排名值。可用 <code>ZINCRBY</code> 增量更新、<code>ZREVRANK</code> 查单个用户名次、<code>ZREVRANGE</code> 取榜首。Redis 位置从 0 开始，同分排序按成员字典序规则处理。业务需要同名次时，要明确并列规则。分片时，一个大 ZSet 仍属于一个槽，还要按内存、更新与读取压力评估拆榜、分区取 Top N 后合并或预计算。</p>
+<h2 id="缓存穿透、击穿和雪崩"><a href="#缓存穿透、击穿和雪崩" class="headerlink" title="缓存穿透、击穿和雪崩"></a>缓存穿透、击穿和雪崩</h2><ul>
+<li><strong>穿透</strong>是大量请求查不存在的键，可使用短期空值缓存、布隆过滤器，或先校验无效请求。</li>
+<li><strong>击穿</strong>是热点键过期时并发回源，可用互斥重建，获得锁后再次检查缓存，其余请求等待、重试或在业务允许时读旧值。</li>
+<li><strong>雪崩</strong>是大量键同时过期或缓存整体不可用，可给 TTL 加随机抖动，并在故障时限流、降级和保护数据库。</li>
+</ul>
+<h2 id="本地-Map-和-Redis-怎么选，两级缓存怎么同步"><a href="#本地-Map-和-Redis-怎么选，两级缓存怎么同步" class="headerlink" title="本地 Map 和 Redis 怎么选，两级缓存怎么同步"></a>本地 Map 和 Redis 怎么选，两级缓存怎么同步</h2><p><code>ConcurrentHashMap</code> 的数据只在当前 JVM 中，应用重启后需重新预热。多实例会话若只存在一个进程，请求被负载均衡到其他实例时就找不到。Redis 是独立服务，多个应用可以共享会话、缓存或库存状态，并按配置做持久化。Redis 需要网络访问，因此对读多写少的热点数据也可以用 Caffeine 等作为 L1，Redis 作为 L2。</p>
+<ol>
+<li><strong>短 TTL。</strong> 给本地缓存设置短过期时间，例如 3 到 5 秒，适用于接受短时旧值的榜单、浏览量和商品描述。</li>
+<li><strong>广播失效。</strong> 更新数据库并提交后，删除旧 Redis 缓存，再通过 Redis Pub&#x2F;Sub、Kafka 或 RabbitMQ 通知各实例删除本地项。Pub&#x2F;Sub 离线会漏收，常配合 TTL 兜底。用 MQ 广播时要让每个需要失效的实例都能收到事件。</li>
+<li><strong>Canal 与 MQ。</strong> Canal 订阅 MySQL binlog，将已提交的变更变成消息，各应用消费后清理本地或共享缓存。需要处理消费延迟、重复、乱序，以及并发回填旧值的问题。</li>
+<li><strong>统一缓存框架。</strong> JetCache、J2Cache 提供两级缓存的封装，可按版本确认 Redis 或 MQ 通知机制、失效范围和故障语义。</li>
+</ol>
+<h2 id="Redis-单机用的是哈希环还是哈希槽"><a href="#Redis-单机用的是哈希环还是哈希槽" class="headerlink" title="Redis 单机用的是哈希环还是哈希槽"></a>Redis 单机用的是哈希环还是哈希槽</h2><p><strong>深势科技一面。</strong> 单节点的所有读写都到同一实例，单纯主从复制也没有按键分片。以我的「友邻探」项目为例，早期的数据量有限，部署优先考虑运维成本，没有引入按键分片。</p>
+<p>Redis Cluster 将键空间划成 16,384 个槽，由主节点负责不同槽。常规路由算 <code>CRC16(key) % 16384</code>，哈希标签可让有关联的键落在同槽。一致性哈希环可用于部分客户端或代理分片，例如早期客户端方案，将节点和键映射到环上，扩缩容时减少重映射。面试里先讲自己实际使用的模式，再说明这两种路由机制。</p>
+<h2 id="RDB-和-AOF-怎么选"><a href="#RDB-和-AOF-怎么选" class="headerlink" title="RDB 和 AOF 怎么选"></a>RDB 和 AOF 怎么选</h2><table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>RDB</th>
+<th>AOF</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>机制</td>
+<td>把某一时间点的数据写成压缩快照，如 <code>dump.rdb</code></td>
+<td>追加写操作，重启时从基线和增量日志恢复，支持重写</td>
+</tr>
+<tr>
+<td>故障损失</td>
+<td>可能丢失最后一次完成快照之后的更新</td>
+<td>由 <code>appendfsync always / everysec / no</code> 决定，<code>everysec</code> 一般按约 1 秒的丢失窗口估算</td>
+</tr>
+<tr>
+<td>体积和恢复</td>
+<td>通常较紧凑，适合备份，加载较快</td>
+<td>日志可能较大，回放可能较慢，重写可压缩历史</td>
+</tr>
+<tr>
+<td>资源开销</td>
+<td>后台快照涉及 <code>fork</code> 和写时复制，内存大时需观察停顿和额外内存</td>
+<td>追加和刷盘带来 I&#x2F;O，重写同样有进程和内存开销</td>
+</tr>
+</tbody></table>
+<p>使用 <code>aof-use-rdb-preamble yes</code> 可用 RDB 编码作 AOF 基线，再保留增量。Redis 7 起支持多段 AOF 和清单管理。持久化策略应结合允许的数据损失、恢复时间和备份要求，应用进程重启时仍要区分 Redis 服务是否存活。<a target="_blank" rel="noopener" href="https://redis.io/docs/latest/management/persistence/">Redis 持久化文档</a></p>
+<h2 id="Redis-分布式锁、Lua-和-Redisson"><a href="#Redis-分布式锁、Lua-和-Redisson" class="headerlink" title="Redis 分布式锁、Lua 和 Redisson"></a>Redis 分布式锁、Lua 和 Redisson</h2><p>基础获取用 <code>SET key owner NX PX ttl</code>，<code>owner</code> 是该次持有者的唯一标识。释放时在 Lua 中原子地比较所有者并删除，防止过期后误删下一位持有者的锁。Lua 脚本的执行不会与其他命令交错，但执行出错前的写入不会因此自动回滚。脚本应短小，声明访问的键，Redis Cluster 中一次脚本访问的多个键需在同槽。另一种常见方案是 ZooKeeper 临时顺序节点，由竞争者按顺序等待。</p>
+<p>Redisson 的 <code>RLock</code> 用持有者标识和计数实现可重入，关键更新通过 Lua 完成。未显式传固定 <code>leaseTime</code> 时，可由看门狗续期，常用默认超时为 30 秒，可配置 <code>lockWatchdogTimeout</code>。传入固定租期后，锁到期自动释放，不走该续期机制。业务若无法接受旧持有者在租期过后继续写入，还要用数据库版本或 fencing token 做最终写入校验。<a target="_blank" rel="noopener" href="https://redisson.pro/docs/data-and-services/locks-and-synchronizers/">Redisson 锁与同步器文档</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

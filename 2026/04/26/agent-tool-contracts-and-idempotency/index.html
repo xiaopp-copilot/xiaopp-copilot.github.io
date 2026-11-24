@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>给 Agent 工具设计清晰的参数、错误和重试语义</h1>
-    <div class="entry-meta">
-      <time datetime="2026-04-26">2026-04-26</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-04-26">2026-04-26</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>一个「为草稿添加标签」的工具，描述至少要说清对象类型、支持的标签和成功后返回什么。我会用 JSON Schema 限制参数形态，让执行端再检验草稿存在性、当前权限和业务状态。结构正确只能证明数据满足接口格式，真正是否能执行还要由业务系统决定。</p>
 <h2 id="工具应返回可处理的结果"><a href="#工具应返回可处理的结果" class="headerlink" title="工具应返回可处理的结果"></a>工具应返回可处理的结果</h2><p>成功时返回草稿 ID、写入后的标签和必要版本信息。参数错误返回错误字段及允许值，权限不足直接结束该路径，短暂服务繁忙才允许在预算内重试。网络超时有时意味着远端已经写入，所以修改接口宜支持幂等键，或提供按请求 ID 查询结果的能力。</p>

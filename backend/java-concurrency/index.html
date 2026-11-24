@@ -1,0 +1,112 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 Java 面试中的面向对象、JMM、volatile、synchronized、AQS 和并发容器追问。">
+  <title>Java 基础与并发：从对象、多态到锁和并发集合 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/java-concurrency/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Java 基础与并发：从对象、多态到锁和并发集合</h1>
+    
+  </header>
+  <div class="prose"><h2 id="Java-的三大特性是什么"><a href="#Java-的三大特性是什么" class="headerlink" title="Java 的三大特性是什么"></a>Java 的三大特性是什么</h2><p><strong>新大陆面试原题。</strong> 封装把状态和操作放进对象，用访问控制保护内部实现。继承让子类复用父类的行为并提供扩展点。<code>public</code>、<code>protected</code> 成员可继承，同包还涉及包可见成员，<code>private</code> 成员不可由子类直接访问，也不作为继承成员。多态允许同一调用因实际对象不同而执行不同实现，例如 <code>Animal a = new Dog(); a.speak();</code>。这里有继承或接口关系，子类型提供自己的实现，调用通过父类型引用完成。静态方法隐藏和实例方法重写要分开，运行时分派讨论的是实例方法。</p>
+<h2 id="创建线程有哪些方式"><a href="#创建线程有哪些方式" class="headerlink" title="创建线程有哪些方式"></a>创建线程有哪些方式</h2><p><strong>浩鲸科技一面追问。</strong> 继承 <code>Thread</code> 并重写 <code>run()</code>，或者实现 <code>Runnable</code> 后传给 <code>Thread</code>，再用 <code>start()</code> 启动线程。需要返回值或声明受检异常时，可以实现 <code>Callable&lt;V&gt;</code>，用 <code>FutureTask&lt;V&gt;</code> 包装后交给线程执行，或直接提交给执行器。<code>Future.get()</code> 在结果未完成时可能阻塞。应用里的批量异步任务通常由线程池统一管理。</p>
+<h2 id="JMM、volatile-和-CAS"><a href="#JMM、volatile-和-CAS" class="headerlink" title="JMM、volatile 和 CAS"></a>JMM、volatile 和 CAS</h2><p>Java 内存模型定义多线程对共享变量读写时的可见性和顺序。主内存与工作内存是理解共享读写的抽象，判断一个读能看到哪些写时应看 <strong>happens-before</strong> 关系。典型规则包括同一监视器的解锁先于后续加锁，以及对同一 <code>volatile</code> 变量的写入先于后续读取。</p>
+<ul>
+<li><strong>可见性</strong>关心一个线程的写入何时能被另一个线程看到。<code>volatile</code> 可用来发布状态，正确使用同一把锁也能建立可见性保证。</li>
+<li><strong>有序性</strong>关心哪些操作可重排。<code>volatile</code> 对读写周围的操作施加顺序约束，具体屏障由 JVM 和硬件实现。</li>
+<li><strong>原子性</strong>关心一组操作是否可被并发线程观察到中间状态。<code>volatile int count</code> 的 <code>count++</code> 仍有读、加、写三步，会发生丢失更新。可用 <code>synchronized</code>、<code>ReentrantLock</code> 或 <code>AtomicInteger.incrementAndGet()</code>。</li>
+</ul>
+<p>CAS 比较内存位置的当前值与预期旧值，匹配时原子地写入新值。失败后可读取新值再重试。它常用于乐观并发控制，激烈竞争下反复重试会消耗 CPU。数值经历 A→B→A 时，仅比较值看不出中间变化，这就是 ABA 问题，可按需要用 <code>AtomicStampedReference</code> 加版本标记。</p>
+<h2 id="synchronized-能修饰变量吗"><a href="#synchronized-能修饰变量吗" class="headerlink" title="synchronized 能修饰变量吗"></a>synchronized 能修饰变量吗</h2><p><strong>深势科技一面。</strong> <code>synchronized</code> 能修饰实例方法、静态方法，也能声明同步代码块。<code>synchronized (lock)</code> 引用的对象是监视器，写法没有给变量本身加修饰符。实例方法锁 <code>this</code>，静态方法锁声明类的 <code>Class</code> 对象，同步代码块允许选择一个共享锁对象并缩短持锁范围。保护同一份状态的所有访问必须遵守同一锁约定。若 A、B 两组状态彼此独立，可用两把锁分别保护。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">Object</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Object</span>();</span><br><span class="line"><span class="keyword">private</span> <span class="type">int</span> count;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="type">void</span> <span class="title function_">increment</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (lock) &#123;</span><br><span class="line">        count++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="type">void</span> <span class="title function_">otherOperation</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// 这里持有 this 的监视器。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用 <code>javap -v</code> 看字节码时，同步代码块对应 <code>monitorenter</code> 和 <code>monitorexit</code>，同步方法带 <code>ACC_SYNCHRONIZED</code> 标志。线程正常返回或抛异常离开同步范围时会释放监视器。监视器可重入，已持有它的线程可以再次进入。对象身份用于关联同步状态，HotSpot 的对象头和监视器结构记录或关联锁状态。发生竞争时，有持有者、等待进入的线程和因 <code>wait()</code> 进入等待集合的线程。HotSpot 可以按需膨胀监视器。</p>
+<p>旧版 HotSpot 常用无锁、偏向、轻量级和重量级解释优化过程。偏向锁适用于单线程频繁获取同一把锁，轻量级路径可用 CAS 等方式尝试获取，竞争加剧时可膨胀为监视器并挂起等待线程。实现随 JDK 版本调整，JDK 15 已默认禁用偏向锁。<a target="_blank" rel="noopener" href="https://openjdk.org/jeps/374">OpenJDK JEP 374</a></p>
+<h2 id="ReentrantLock-和-AQS-怎么配合"><a href="#ReentrantLock-和-AQS-怎么配合" class="headerlink" title="ReentrantLock 和 AQS 怎么配合"></a>ReentrantLock 和 AQS 怎么配合</h2><p><code>ReentrantLock</code> 的同步器基于 AQS。<code>state</code> 为 0 时表示未加锁，持有者重复加锁会增加持有计数，<code>exclusiveOwnerThread</code> 跟踪持有线程。获取失败的线程封装成节点进入基于 CLH 的同步队列，等待再次尝试。<code>unlock()</code> 放在 <code>finally</code>，确保异常路径也释放。</p>
+<p>默认使用非公平模式，也可以配置按等待顺序竞争的公平模式。<code>lockInterruptibly()</code> 支持可中断等待，<code>tryLock()</code> 支持立即尝试，<code>tryLock(time, unit)</code> 支持限时等待。多个 <code>Condition</code> 可为不同条件维护等待队列。JUC 还提供原子类、线程池和并发集合，<code>Semaphore</code>、<code>CountDownLatch</code> 也基于 AQS 表达各自的同步条件。</p>
+<h2 id="sleep-和-wait-有什么区别"><a href="#sleep-和-wait-有什么区别" class="headerlink" title="sleep 和 wait 有什么区别"></a>sleep 和 wait 有什么区别</h2><table>
+<thead>
+<tr>
+<th>对比项</th>
+<th><code>Thread.sleep(...)</code></th>
+<th><code>Object.wait(...)</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>所属类型</td>
+<td><code>Thread</code> 的静态方法，暂停当前线程</td>
+<td><code>Object</code> 的实例方法，作用于指定监视器</td>
+</tr>
+<tr>
+<td>锁</td>
+<td>保留已经持有的监视器</td>
+<td>释放调用对象的监视器，其余锁保持</td>
+</tr>
+<tr>
+<td>调用条件</td>
+<td>无需持有监视器</td>
+<td>调用线程必须持有该对象的监视器，否则抛出 <code>IllegalMonitorStateException</code></td>
+</tr>
+<tr>
+<td>恢复方式</td>
+<td>到期继续调度，或者被中断</td>
+<td>同一对象上的 <code>notify()</code>、<code>notifyAll()</code>、超时或中断，也可能虚假唤醒</td>
+</tr>
+<tr>
+<td>线程状态</td>
+<td>正时长等待是 <code>TIMED_WAITING</code></td>
+<td>无超时等待是 <code>WAITING</code>，带超时则是 <code>TIMED_WAITING</code></td>
+</tr>
+</tbody></table>
+<p><code>wait()</code> 返回前要重新获取该监视器。条件等待应放在 <code>while</code> 中，每次醒来都重新检查条件。</p>
+<h2 id="HashMap、Hashtable-和-ConcurrentHashMap"><a href="#HashMap、Hashtable-和-ConcurrentHashMap" class="headerlink" title="HashMap、Hashtable 和 ConcurrentHashMap"></a>HashMap、Hashtable 和 ConcurrentHashMap</h2><ul>
+<li><strong>HashMap</strong> 适合单线程或已经由调用者同步的使用方式，允许一个 <code>null</code> 键和多个 <code>null</code> 值。默认负载因子为 0.75，元素数超过扩容阈值时通常把桶数组容量翻倍。JDK 8 扩容时可用哈希中的新增容量位决定节点留在原下标还是移到原下标加旧容量。扩容改善桶的分布，减少碰撞和退化风险。</li>
+<li><strong>Hashtable</strong> 的主要操作在同一个对象监视器上同步，键和值均不接受 <code>null</code>，高竞争下写入容易串行化。</li>
+<li><strong>ConcurrentHashMap</strong> 的 JDK 7 实现按 <code>Segment</code> 分段，每个段用 <code>ReentrantLock</code> 管理写入，默认并发级别 16 是构造参数默认值。JDK 8 的实现使用桶数组、链表和红黑树，空桶插入常用 CAS，已有碰撞的桶更新使用桶级同步，并支持多个线程协助扩容。树化还要看表容量，容量较小时会优先尝试扩容。复合更新可用 <code>putIfAbsent</code>、<code>compute</code> 等原子操作。</li>
+</ul>
+<p><strong>挖角面试追问，HashMap 为什么线程不安全？</strong> 它没有为并发更新提供同步和可见性保证。两个线程同时写同一个桶或在扩容中继续读写，可能出现更新丢失或读到不一致的状态。可按使用方式选择外部同步或 <code>ConcurrentHashMap</code>。</p>
+<p><strong>哈希冲突怎么处理？</strong> 链地址法把碰撞元素放在同一个桶中，HashMap 是例子。开放寻址法在数组里按规则找下一处位置，例如 <code>ThreadLocalMap</code> 的线性探测。再哈希法使用另一哈希函数进一步定位。单进程内并发访问可以用 <code>ConcurrentHashMap</code>，跨节点的会话或缓存见 <a href="/backend/redis-cache/">Redis 与缓存</a>。<a target="_blank" rel="noopener" href="https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/concurrent/ConcurrentHashMap.java">OpenJDK 并发集合源码</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>搭一个能说明答案来自哪里的 RAG 基线</h1>
-    <div class="entry-meta">
-      <time datetime="2026-04-12">2026-04-12</time>
-      
-        <a href="/categories/agent/">Agent</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-04-12">2026-04-12</time>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>从几十篇技术文档起步，我会先建一套最小检索流程。按标题和段落切块，给每块保存文档 ID、标题路径、版本和定位信息。查询时先限制数据范围，再取候选片段。生成端带着这些片段回答，并给出能回到原段落的引用。证据缺少时，说明还缺什么。</p>
 <h2 id="先让检索问题可定位"><a href="#先让检索问题可定位" class="headerlink" title="先让检索问题可定位"></a>先让检索问题可定位</h2><p>向量检索适合召回表达不同、含义相近的段落。错误码、接口名、产品缩写等精确词也适合用倒排检索。我会先跑两条候选通路，分别查看命中情况，再考虑融合结果。排查时记录候选片段及其来源，方便判断是切块不合适、召回没命中，还是后续排序压低了有效证据。</p>

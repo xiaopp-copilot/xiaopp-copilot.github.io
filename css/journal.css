@@ -224,6 +224,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
   border-bottom: 1px solid var(--line);
 }
 
+.post-row-undated { grid-template-columns: minmax(0, 1fr) auto; }
 .post-row:hover { color: var(--accent); background: #f5efe5; }
 .post-row time, .entry-meta time { color: var(--muted); font: .84rem var(--mono); }
 .post-title { font-weight: 600; overflow-wrap: anywhere; }

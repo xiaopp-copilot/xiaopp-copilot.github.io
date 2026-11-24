@@ -33,16 +33,19 @@
     </div>
   </header>
   <main class="shell site-main" id="main" tabindex="-1">
-    <article class="entry">
+    
+<article class="entry">
   <header class="entry-header">
     <a class="text-link back-link" href="/archives/"><span aria-hidden="true">←</span> 时间归档</a>
     <h1>稽核点的稳定编码与可读结果</h1>
-    <div class="entry-meta">
-      <time datetime="2026-06-26">2026-06-26</time>
-      
-        <a href="/categories/internship/">实习</a>
-      
-    </div>
+    
+      <div class="entry-meta">
+        <time datetime="2026-06-26">2026-06-26</time>
+        
+          <a href="/categories/internship/">实习</a>
+        
+      </div>
+    
   </header>
   <div class="prose"><p>这天的两项任务都在处理稽核信息的表达。一项是给系统可稳定识别的稽核点增加编码，另一项是让业务人员看懂按明细行配对后生成的稽核结果。</p>
 <h2 id="用编码识别稽核点"><a href="#用编码识别稽核点" class="headerlink" title="用编码识别稽核点"></a>用编码识别稽核点</h2><p>旧逻辑通过中文描述推断稽核点应执行的方法，文案变化会增加映射维护成本。我为稽核点、稽核单元和制度标准准备了增加标识码字段的脚本，并在标准记录上补充经济事项与费用行为唯一码字段。迁移脚本分别适配 Oracle 和 TDSQL，已有的稽核点和稽核单元按历史描述回填标识码，Java 实体和 DTO 同步扩展。</p>

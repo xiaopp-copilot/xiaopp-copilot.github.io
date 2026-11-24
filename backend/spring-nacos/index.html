@@ -1,0 +1,162 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="整理 Spring Boot 启动、循环依赖、静态字段、事务传播、事件监听及 Nacos 面试题。">
+  <title>Spring 与 Nacos：容器、代理、事务、事件和服务发现 · 工程手记</title>
+  <link rel="canonical" href="https://xiaopp-copilot.github.io/backend/spring-nacos/index.html">
+  
+<link rel="stylesheet" href="/css/journal.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span>工程手记</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">首页</a>
+        
+          <a href="/categories/agent/">Agent</a>
+        
+          <a href="/categories/backend/">传统后端</a>
+        
+          <a href="/categories/internship/">实习</a>
+        
+        <a href="/archives/">归档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell site-main" id="main" tabindex="-1">
+    
+<article class="entry">
+  <header class="entry-header">
+    <a class="text-link back-link" href="/categories/backend/"><span aria-hidden="true">←</span> 传统后端</a>
+    <h1>Spring 与 Nacos：容器、代理、事务、事件和服务发现</h1>
+    
+  </header>
+  <div class="prose"><h2 id="Spring-Boot-是什么，应用怎么启动"><a href="#Spring-Boot-是什么，应用怎么启动" class="headerlink" title="Spring Boot 是什么，应用怎么启动"></a>Spring Boot 是什么，应用怎么启动</h2><p>Spring Boot 把约定优于配置落到 Starter、自动配置和内嵌服务器上。Starter 汇总一组常用依赖，自动配置按类路径、配置和现有 Bean 等条件决定要注册什么。以 Servlet 应用为例，从启动类的 <code>main</code> 调用 <code>SpringApplication.run</code> 开始，准备环境和配置，创建并刷新应用上下文，处理组件扫描及自动配置，web 上下文在刷新过程中创建并启动嵌入式服务器。常见应用可打成可执行 JAR，启动时不需要额外部署到外部 Tomcat。</p>
+<p><strong>文件上传默认限制是多少？</strong> 在 Spring Boot 的 Servlet multipart 自动配置里，单文件默认 1 MB，整次请求默认 10 MB。单次请求可能包含多个文件，还会受网关或代理限制。可以配置为：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">servlet:</span></span><br><span class="line">    <span class="attr">multipart:</span></span><br><span class="line">      <span class="attr">max-file-size:</span> <span class="string">20MB</span></span><br><span class="line">      <span class="attr">max-request-size:</span> <span class="string">100MB</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="IOC、AOP-和-Spring-中的设计模式"><a href="#IOC、AOP-和-Spring-中的设计模式" class="headerlink" title="IOC、AOP 和 Spring 中的设计模式"></a>IOC、AOP 和 Spring 中的设计模式</h2><p>IOC 将对象创建、装配和生命周期交给容器。依赖注入是实现方式之一，业务对象通过构造器、Setter 等接收所需依赖。AOP 把日志、权限、事务等横切逻辑织入目标方法调用。AspectJ 支持编译期或类加载期织入字节码，Spring AOP 通常在运行时创建代理。JDK 动态代理代理接口，CGLIB 生成子类，具体选择取决于框架和配置，可为有接口的类配置类代理。</p>
+<p>这些设计模式可以对应到具体接口和行为。</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>Spring 中的例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工厂</td>
+<td><code>BeanFactory</code> 按定义创建和查找 Bean，调用方无须掌握实例化细节</td>
+</tr>
+<tr>
+<td>单例</td>
+<td>单例作用域通常在每个容器内为每个 Bean 定义保留一个实例，同一类可注册多个不同名称的定义</td>
+</tr>
+<tr>
+<td>代理</td>
+<td>Spring AOP 的方法增强，例如事务拦截</td>
+</tr>
+<tr>
+<td>观察者</td>
+<td>应用事件的发布和监听，监听器可订阅上下文生命周期或业务事件</td>
+</tr>
+<tr>
+<td>构建者</td>
+<td><code>SpringApplicationBuilder</code> 逐步设置应用启动参数</td>
+</tr>
+<tr>
+<td>策略</td>
+<td>同一接口按业务或配置选择实现，例如不同的实例选择或处理策略</td>
+</tr>
+</tbody></table>
+<h2 id="三级缓存如何解决循环依赖"><a href="#三级缓存如何解决循环依赖" class="headerlink" title="三级缓存如何解决循环依赖"></a>三级缓存如何解决循环依赖</h2><p>以允许循环引用的单例 Setter 或字段注入为例。一级缓存 <code>singletonObjects</code> 存完成创建的单例，二级 <code>earlySingletonObjects</code> 存提前曝光的引用，三级 <code>singletonFactories</code> 存能提供早期引用的工厂。</p>
+<ol>
+<li>A 实例化后尚未填充属性，容器登记 A 的早期引用工厂。注入 B 时发现 B 尚未创建，于是实例化 B 并登记 B 的工厂。</li>
+<li>B 注入 A 时，从 A 的工厂取得早期引用，必要时由后置处理器提供早期代理。该引用进入二级缓存，三级工厂随即移除。</li>
+<li>B 完成初始化并进入一级缓存。A 注入 B 后完成初始化并进入一级缓存，容器清理 A 的早期缓存。</li>
+</ol>
+<p>构造器互相依赖时，双方在实例化前就需要对方，无法先登记工厂。循环引用还受配置、Bean 作用域和代理条件影响。排查时先画出依赖图，判断能否把共同职责提到第三个组件。<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html">Spring Framework 依赖注入文档</a></p>
+<h2 id="Spring-能把-Bean-注入静态字段吗"><a href="#Spring-能把-Bean-注入静态字段吗" class="headerlink" title="Spring 能把 Bean 注入静态字段吗"></a>Spring 能把 Bean 注入静态字段吗</h2><p><strong>深势科技一面。</strong> <code>@Autowired</code> 的常规注入发生在容器管理的实例上，类级静态字段不能由它直接注入。新代码一般用构造器依赖和实例方法。历史代码如果必须保留静态入口，可以考虑三种间接处理。</p>
+<ol>
+<li>在 <code>@Component</code> 上用非静态 Setter 接收依赖，再赋值给静态字段。例如 <code>@Autowired void setTemplate(StringRedisTemplate template) { RedisUtil.template = template; }</code>。</li>
+<li>先注入普通成员变量。容器完成依赖注入后运行 <code>@PostConstruct</code>，在初始化方法中将它赋给静态引用，例如把实例上的 <code>UserService</code> 交给旧版静态工具方法。</li>
+<li>让托管组件实现 <code>ApplicationContextAware</code>。在 <code>setApplicationContext</code> 保存上下文，静态工具类调用包装后的 <code>context.getBean(UserService.class)</code>。这会隐藏依赖，并增加多上下文和测试的隔离成本。</li>
+</ol>
+<p>三种写法都要求调用发生在组件完成相应初始化后。</p>
+<h2 id="Transactional-为什么失效，传播行为有哪些"><a href="#Transactional-为什么失效，传播行为有哪些" class="headerlink" title="@Transactional 为什么失效，传播行为有哪些"></a>@Transactional 为什么失效，传播行为有哪些</h2><p>同类方法用 <code>this</code> 发起内部调用，会绕开默认事务代理。<code>private</code> 方法无法由子类代理覆盖，也不能成为接口代理方法。异常被业务代码捕获后没有传播，同时事务也未标记回滚，拦截器可能按正常返回处理。默认回滚规则通常覆盖 <code>RuntimeException</code> 和 <code>Error</code>，受检异常可通过 <code>rollbackFor</code> 配置。</p>
+<p><strong>亿联网络一面问到了传播行为。</strong> 可以用外层订单操作调用内层记账操作来区分：</p>
+<table>
+<thead>
+<tr>
+<th>传播方式</th>
+<th>已有事务时</th>
+<th>无事务时</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>REQUIRED</code></td>
+<td>加入现有事务</td>
+<td>新开事务</td>
+</tr>
+<tr>
+<td><code>REQUIRES_NEW</code></td>
+<td>挂起外层，独立开启物理事务</td>
+<td>新开事务</td>
+</tr>
+<tr>
+<td><code>NESTED</code></td>
+<td>在支持的资源上使用保存点</td>
+<td>新开事务</td>
+</tr>
+<tr>
+<td><code>SUPPORTS</code></td>
+<td>加入现有事务</td>
+<td>非事务执行</td>
+</tr>
+<tr>
+<td><code>MANDATORY</code></td>
+<td>加入现有事务</td>
+<td>抛异常</td>
+</tr>
+<tr>
+<td><code>NOT_SUPPORTED</code></td>
+<td>挂起事务并以非事务方式执行</td>
+<td>非事务执行</td>
+</tr>
+<tr>
+<td><code>NEVER</code></td>
+<td>抛异常</td>
+<td>非事务执行</td>
+</tr>
+</tbody></table>
+<p><code>REQUIRED</code> 共享物理事务，内层标记回滚后外层仍试图提交，可能收到 <code>UnexpectedRollbackException</code>。<code>REQUIRES_NEW</code> 的内层独立提交和回滚，通常要再借一个连接。<code>NESTED</code> 可以回滚到保存点，外层最终回滚时内层修改也会回滚。<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html">Spring 事务传播文档</a></p>
+<h2 id="EventListener-怎么注册，事务回滚后怎样控制发消息"><a href="#EventListener-怎么注册，事务回滚后怎样控制发消息" class="headerlink" title="@EventListener 怎么注册，事务回滚后怎样控制发消息"></a>@EventListener 怎么注册，事务回滚后怎样控制发消息</h2><p><strong>苏州科达面试原题。</strong> 在常见配置中，<code>EventListenerMethodProcessor</code> 实现 <code>SmartInitializingSingleton</code>，在常规单例初始化结束后的 <code>afterSingletonsInstantiated()</code> 查找监听方法。它通常经 <code>EventListenerFactory</code> 将方法包装成实现 <code>ApplicationListener</code> 的 <code>ApplicationListenerMethodAdapter</code>，注册到应用上下文。发布事件后，<code>ApplicationEventMulticaster</code> 找到适配器并调用 <code>onApplicationEvent</code>。适配器匹配事件类型、处理参数和 <code>condition</code> 的 SpEL 条件，再调用原方法。普通监听器默认可同步执行，异步行为要显式配置。<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/event/EventListener.html">Spring EventListener API</a></p>
+<p>业务方法可发布应用事件，由 <code>@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)</code> 在事务成功提交后调用 <code>RabbitTemplate</code>。事务回滚时，这个阶段的监听器不会执行。提交后到实际投递之间仍有故障窗口。需要可恢复投递时，把待发记录和业务更新一起提交，细节见 <a href="/backend/rabbitmq-kafka/">消息队列与 Outbox</a>。</p>
+<h2 id="Nacos-怎么发现实例新增、变更和下线"><a href="#Nacos-怎么发现实例新增、变更和下线" class="headerlink" title="Nacos 怎么发现实例新增、变更和下线"></a>Nacos 怎么发现实例新增、变更和下线</h2><p><strong>挖角面试原题。</strong> 提供者按命名空间、分组、服务名与 IP、端口等信息注册实例。消费者拉取或订阅实例列表并维护本地缓存，再从健康实例中选择调用对象。</p>
+<ul>
+<li>旧 HTTP 客户端以定时心跳维持临时实例。笔记里的常见参数是每 5 秒上报、15 秒未更新标为不健康、30 秒后剔除，实际值与协议、版本和配置有关。持久实例通常由服务端主动探测，状态异常时可保留记录并标为不健康。</li>
+<li>早期 Naming 客户端可用 UDP 推送更新，兼有客户端拉取。Nacos 2.x Java SDK 的主要通信通道是 gRPC 长连接，临时实例和连接生命周期关联，重连后 SDK 恢复注册和订阅。gRPC 基于 HTTP&#x2F;2，可在同一连接上承载多个流。</li>
+<li>配置中心要和服务发现分开讲。旧 HTTP 长轮询中，服务端可挂起订阅请求，例如约 30 秒，变更时返回通知，超时则结束请求，客户端再发出下一次轮询。客户端重新拉取配置、更新本地缓存或磁盘快照，再触发监听。<code>@Value</code> 或 Bean 是否刷新，还取决于 Spring Cloud Alibaba 的刷新配置和 Bean 的作用域。</li>
+</ul>
+<p><strong>微服务架构还会追问什么？</strong> 博思软件问过对微服务和 Kubernetes 的理解。可以从业务边界、独立部署与服务之间的契约说起，再讲注册发现、超时与限流、熔断降级和监控。Kubernetes 提供容器调度、滚动更新、Service 发现等能力。若同时用 Kubernetes 和 Nacos，先说清运行环境与应用框架各自承担的发现和配置职责。<a target="_blank" rel="noopener" href="https://nacos.io/en/docs/v3.2/manual/user/sdk/runtime-guide/">Nacos SDK 运行机制</a></p>
+</div>
+</article>
+
+  </main>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <a href="/">工程手记</a>
+      <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>
